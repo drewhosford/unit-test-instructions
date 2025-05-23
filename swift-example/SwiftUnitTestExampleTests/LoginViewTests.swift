@@ -73,91 +73,230 @@ final class LoginViewTests: XCTestCase {
         XCTAssertNotNil(loginButton, "Login button should exist")
         XCTAssertNotNil(errorLabel, "Error label should exist")
         XCTAssertEqual(errorLabel?.text, "", "Error label should be empty initially")
-            }
-    
-    func testREQ001_ValidCredentialsLogin() async throws {
-        // Arrange
-        let expectation = XCTestExpectation(description: "Login completion")
-        let testUsername = "testuser"
-        let testPassword = "password123"
-        
-        mockSession.mockResponse = (
-            data: "{}".data(using: .utf8)!,
-            response: HTTPURLResponse(
-                url: URL(string: "https://testing.com/login")!,
-                statusCode: 200,
-                httpVersion: nil,
-                headerFields: nil)!,
-            error: nil
-        )
-        
-        // Act
-        loginView.username = testUsername
-        loginView.password = testPassword
-        
-        // Assert
-        await loginView.login()
-        XCTAssertEqual(loginView.alertMessage, "Login successful")
-        XCTAssertTrue(loginView.showAlert)
     }
     
-    /// REQ-002: Test failed login with invalid credentials
-    /// Test Steps:
-    /// 1. Set up mock network response for failed authentication
-    /// 2. Enter invalid username and password
-    /// 3. Trigger login action
-    /// Expected Result: Alert shows failure message
-    func testREQ002_InvalidCredentialsLogin() async throws {
-        // Arrange
-        let testUsername = "wronguser"
-        let testPassword = "wrongpass"
-        
-        mockSession.mockResponse = (
-            data: "{}".data(using: .utf8)!,
-            response: HTTPURLResponse(
-                url: URL(string: "https://testing.com/login")!,
-                statusCode: 401,
-                httpVersion: nil,
-                headerFields: nil)!,
-            error: nil
-        )
-        
-        // Act
-        loginView.username = testUsername
-        loginView.password = testPassword
-        
-        // Assert
-        await loginView.login()
-        XCTAssertEqual(loginView.alertMessage, "Login failed: Status 401")
-        XCTAssertTrue(loginView.showAlert)
+    func test_GivenValidCredentialsAreProvided_WhenTheLoginButtonIsTapped_ThenTheHomeScreenShallDisplay() throws {
+        // S1: Navigate to the login screen
+        let view = LoginView()
+        let hostingController = UIHostingController(rootView: view)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 393, height: 852))
+        window.rootViewController = hostingController
+        window.makeKeyAndVisible()
+
+        // S2: Enter valid username and password
+        let usernameField = hostingController.view.findViewWithIdentifier("usernameTextField") as? UITextField
+        let passwordField = hostingController.view.findViewWithIdentifier("passwordTextField") as? UITextField
+        usernameField?.text = "valid@email.com"
+        passwordField?.text = "ValidPass123!"
+
+        // S3: Tap the login button
+        let loginButton = hostingController.view.findViewWithIdentifier("loginButton") as? UIButton
+        loginButton?.sendActions(for: .touchUpInside)
+
+        // V1: Verify that the home screen is displayed
+        let expectation = XCTestExpectation(description: "Home screen appears")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            let homeScreen = hostingController.view.findViewWithIdentifier("homeScreen")
+            XCTAssertNotNil(homeScreen, "Home screen should be displayed")
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 2.0)
+    }
+
+    func test_GivenAnInvalidEmailIsProvided_WhenTheLoginButtonIsTapped_ThenItShallDisplayAnErrorCommunicatingThatTheEmailIsInvalid() throws {
+        // S1: Navigate to the login screen
+        let view = LoginView()
+        let hostingController = UIHostingController(rootView: view)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 393, height: 852))
+        window.rootViewController = hostingController
+        window.makeKeyAndVisible()
+
+        // S2: Enter invalid email and valid password
+        let usernameField = hostingController.view.findViewWithIdentifier("usernameTextField") as? UITextField
+        let passwordField = hostingController.view.findViewWithIdentifier("passwordTextField") as? UITextField
+        usernameField?.text = "invalidemail"
+        passwordField?.text = "ValidPass123!"
+
+        // S3: Tap the login button
+        let loginButton = hostingController.view.findViewWithIdentifier("loginButton") as? UIButton
+        loginButton?.sendActions(for: .touchUpInside)
+
+        // V1: Verify that an error message about invalid email is displayed
+        let expectation = XCTestExpectation(description: "Error message appears")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let errorLabel = hostingController.view.findViewWithIdentifier("errorLabel") as? UILabel
+            XCTAssertNotNil(errorLabel, "Error label should exist")
+            XCTAssertEqual(errorLabel?.text, "Please enter a valid email address", "Error message should indicate invalid email")
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1.0)
+    }
+
+    func test_GivenAPasswordThatDoesNotHaveACaptialLetter_WhenTheLoginButtonIsTapped_ThenItShallDisplayAnErrorCommunicatingThatThePasswordNeedsToHaveACaptialLetter() throws {
+        // S1: Navigate to the login screen
+        let view = LoginView()
+        let hostingController = UIHostingController(rootView: view)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 393, height: 852))
+        window.rootViewController = hostingController
+        window.makeKeyAndVisible()
+
+        // S2: Enter valid email and password without capital letter
+        let usernameField = hostingController.view.findViewWithIdentifier("usernameTextField") as? UITextField
+        let passwordField = hostingController.view.findViewWithIdentifier("passwordTextField") as? UITextField
+        usernameField?.text = "valid@email.com"
+        passwordField?.text = "lowercase123!"
+
+        // S3: Tap the login button
+        let loginButton = hostingController.view.findViewWithIdentifier("loginButton") as? UIButton
+        loginButton?.sendActions(for: .touchUpInside)
+
+        // V1: Verify that an error message about missing capital letter is displayed
+        let expectation = XCTestExpectation(description: "Error message appears")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let errorLabel = hostingController.view.findViewWithIdentifier("errorLabel") as? UILabel
+            XCTAssertNotNil(errorLabel, "Error label should exist")
+            XCTAssertEqual(errorLabel?.text, "Password must contain at least one capital letter", "Error message should indicate missing capital letter")
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1.0)
     }
     
-    /// REQ-003: Test login with network error
-    /// Test Steps:
-    /// 1. Set up mock network to simulate connection error
-    /// 2. Enter any credentials
-    /// 3. Trigger login action
-    /// Expected Result: Alert shows network error message
-    func testREQ003_NetworkError() async throws {
-        // Arrange
-        let testUsername = "testuser"
-        let testPassword = "password123"
-        
-        let testError = NSError(domain: "NetworkError", code: -1009, userInfo: [NSLocalizedDescriptionKey: "Network connection lost"])
+    func test_GivenAPasswordIsShorterThan8Characters_WhenTheLoginButtonIsTapped_ThenItShallDisplayAnErrorCommunicatingThatThePasswordNeedsToHaveAtLeast8Characters() throws {
+        // S1: Navigate to the login screen
+        let view = LoginView()
+        let hostingController = UIHostingController(rootView: view)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 393, height: 852))
+        window.rootViewController = hostingController
+        window.makeKeyAndVisible()
+
+        // S2: Enter valid email and short password
+        let usernameField = hostingController.view.findViewWithIdentifier("usernameTextField") as? UITextField
+        let passwordField = hostingController.view.findViewWithIdentifier("passwordTextField") as? UITextField
+        usernameField?.text = "valid@email.com"
+        passwordField?.text = "Ab1!"  // Only 4 characters
+
+        // S3: Tap the login button
+        let loginButton = hostingController.view.findViewWithIdentifier("loginButton") as? UIButton
+        loginButton?.sendActions(for: .touchUpInside)
+
+        // V1: Verify that an error message about password length is displayed
+        let expectation = XCTestExpectation(description: "Error message appears")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let errorLabel = hostingController.view.findViewWithIdentifier("errorLabel") as? UILabel
+            XCTAssertNotNil(errorLabel, "Error label should exist")
+            XCTAssertEqual(errorLabel?.text, "Password must be at least 8 characters long", "Error message should indicate password length requirement")
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1.0)
+    }
+
+    func test_GivenTheLoginButtonIsTapped_WhenTheResponseIsUrlError1009_ThenItShallDisplayAnErrorCommunicatingThatTheDeviceAppearsToBeOffline() throws {
+        // S1: Navigate to the login screen
+        let view = LoginView()
+        let hostingController = UIHostingController(rootView: view)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 393, height: 852))
+        window.rootViewController = hostingController
+        window.makeKeyAndVisible()
+
+        // S2: Set up mock network error
         mockSession.mockResponse = (
             data: nil,
             response: nil,
-            error: testError
+            error: NSError(domain: NSURLErrorDomain, code: NSURLErrorNotConnectedToInternet, userInfo: nil)
         )
-        
-        // Act
-        loginView.username = testUsername
-        loginView.password = testPassword
-        
-        // Assert
-        await loginView.login()
-        XCTAssertEqual(loginView.alertMessage, "Error: Network connection lost")
-        XCTAssertTrue(loginView.showAlert)
+
+        // S3: Enter valid credentials
+        let usernameField = hostingController.view.findViewWithIdentifier("usernameTextField") as? UITextField
+        let passwordField = hostingController.view.findViewWithIdentifier("passwordTextField") as? UITextField
+        usernameField?.text = "valid@email.com"
+        passwordField?.text = "ValidPass123!"
+
+        // S4: Tap the login button
+        let loginButton = hostingController.view.findViewWithIdentifier("loginButton") as? UIButton
+        loginButton?.sendActions(for: .touchUpInside)
+
+        // V1: Verify that an error message about offline status is displayed
+        let expectation = XCTestExpectation(description: "Error message appears")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let errorLabel = hostingController.view.findViewWithIdentifier("errorLabel") as? UILabel
+            XCTAssertNotNil(errorLabel, "Error label should exist")
+            XCTAssertEqual(errorLabel?.text, "Device appears to be offline. Please check your internet connection.", "Error message should indicate offline status")
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1.0)
+    }
+
+    func test_GivenTheLoginButtonIsTapped_WhenTheResponseIsUrlError1001_ThenItShallDisplayAnErrorCommunicatingThatTheConnectionAppearsToBeSlowAndTheUserShouldTryAgain() throws {
+        // S1: Navigate to the login screen
+        let view = LoginView()
+        let hostingController = UIHostingController(rootView: view)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 393, height: 852))
+        window.rootViewController = hostingController
+        window.makeKeyAndVisible()
+
+        // S2: Set up mock network error
+        mockSession.mockResponse = (
+            data: nil,
+            response: nil,
+            error: NSError(domain: NSURLErrorDomain, code: NSURLErrorTimedOut, userInfo: nil)
+        )
+
+        // S3: Enter valid credentials
+        let usernameField = hostingController.view.findViewWithIdentifier("usernameTextField") as? UITextField
+        let passwordField = hostingController.view.findViewWithIdentifier("passwordTextField") as? UITextField
+        usernameField?.text = "valid@email.com"
+        passwordField?.text = "ValidPass123!"
+
+        // S4: Tap the login button
+        let loginButton = hostingController.view.findViewWithIdentifier("loginButton") as? UIButton
+        loginButton?.sendActions(for: .touchUpInside)
+
+        // V1: Verify that an error message about slow connection is displayed
+        let expectation = XCTestExpectation(description: "Error message appears")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let errorLabel = hostingController.view.findViewWithIdentifier("errorLabel") as? UILabel
+            XCTAssertNotNil(errorLabel, "Error label should exist")
+            XCTAssertEqual(errorLabel?.text, "Connection appears to be slow. Please try again.", "Error message should indicate slow connection")
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1.0)
+    }
+    
+    func test_GivenTheLoginButtonIsTapped_WhenTheResponseIsAnyOtherError_ThenItShallDisplayTheStandardDescriptionOfThatError() throws {
+        // S1: Navigate to the login screen
+        let view = LoginView()
+        let hostingController = UIHostingController(rootView: view)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 393, height: 852))
+        window.rootViewController = hostingController
+        window.makeKeyAndVisible()
+
+        // S2: Set up mock network error with a generic error
+        let genericError = NSError(domain: "com.example.error", code: 999, userInfo: [NSLocalizedDescriptionKey: "An unexpected error occurred"])
+        mockSession.mockResponse = (
+            data: nil,
+            response: nil,
+            error: genericError
+        )
+
+        // S3: Enter valid credentials
+        let usernameField = hostingController.view.findViewWithIdentifier("usernameTextField") as? UITextField
+        let passwordField = hostingController.view.findViewWithIdentifier("passwordTextField") as? UITextField
+        usernameField?.text = "valid@email.com"
+        passwordField?.text = "ValidPass123!"
+
+        // S4: Tap the login button
+        let loginButton = hostingController.view.findViewWithIdentifier("loginButton") as? UIButton
+        loginButton?.sendActions(for: .touchUpInside)
+
+        // V1: Verify that the standard error description is displayed
+        let expectation = XCTestExpectation(description: "Error message appears")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let errorLabel = hostingController.view.findViewWithIdentifier("errorLabel") as? UILabel
+            XCTAssertNotNil(errorLabel, "Error label should exist")
+            XCTAssertEqual(errorLabel?.text, "An unexpected error occurred", "Error message should display the standard error description")
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1.0)
     }
 }
 
