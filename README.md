@@ -7,6 +7,32 @@
 > - Expanded Guidelines for Writing Verification Statements
 > - Added Test Data Management best practices
 
+## Table of Contents
+- [Background](#background)
+  - [Legal evidence that your software works](#legal-evidence-that-your-software-works)
+- [The Traditional Approach: Manual Testing](#the-traditional-approach-manual-testing)
+  - [When Manual Testing Falls Short](#when-manual-testing-falls-short)
+  - [Industry's Common Response vs. Our Innovation](#industrys-common-response-vs-our-innovation)
+- [The Unit Testing Revolution](#the-unit-testing-revolution)
+- [A Modern Process for Unit Testing in Regulated Environments](#a-modern-process-for-unit-testing-in-regulated-environments)
+  - [Rules on FDA requirement writing](#rules-on-fda-requirement-writing)
+  - [Software specific guidelines - Gherkin syntax](#software-specific-guidelines---gherkin-syntax)
+  - [Examples of how to write unit tests in a regulated environment](#examples-of-how-to-write-unit-tests-in-a-regulated-environment)
+  - [Writing unit tests that can be turned into written requirements](#writing-unit-tests-that-can-be-turned-into-written-requirements)
+- [The Verification Protocol](#the-verification-protocol)
+  - [Example Verification Protocol](#example-verification-protocol)
+  - [Swift Example](#swift-example)
+- [Quick Start Guide](#quick-start-guide)
+  - [Writing Your First Medical Device Unit Test](#writing-your-first-medical-device-unit-test)
+  - [Common Pitfalls to Avoid](#common-pitfalls-to-avoid)
+  - [Advanced Topics](#advanced-topics)
+    - [Test Data Management](#test-data-management)
+    - [Continuous Integration](#continuous-integration)
+- [Guidelines for Writing Verification Statements](#guidelines-for-writing-verification-statements)
+  - [Implementation Tips](#implementation-tips)
+- [Conclusion](#conclusion)
+- [TL;DR](#tldr)
+
 ## Background
 
 Writing software for **medical devices** is unlike writing software for any other industry. In typical consumer or enterprise applications, a bug might mean an inconvenience or some lost data. In medical software, a bug — what the FDA often refers to as a **latent design flaw** — can result in **injury or death**.
@@ -28,7 +54,7 @@ When that audit happens, the FDA expects **evidence** that your device works **a
 
 | Step # | Procedure | Expected Result | Observed Result or "As Expected" (A/E) | Pass / Fail |
 |------- | --------- | --------------- | -------------------------------------- | ----------- |
-| 1. | 1. Navigate to the Login screen. | Verify that username and password textfields and a login button are displayed and no errors are be displayed. [REQ-001] | A/E | Pass |
+| 1. | 1. Navigate to the Login screen. | Verify that username and password textfields and a login button are displayed and no errors are displayed. [REQ-001] | A/E | Pass |
 | 2. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password with less than 8 characters.<br>3. Tap the Login button. | Verify that the home screen displays [REQ-002] | A/E | Pass |
 | 3. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password with 8 characters but is all lowercase.<br>3. Tap the Login button. | Verify that the App displays an error communicating that the password needs to at least 1 capital letter [REQ-004] | A/E | Pass |
 | | ... more tests (usually 100's or even 1000's) |
@@ -36,9 +62,15 @@ When that audit happens, the FDA expects **evidence** that your device works **a
 | Tester Name | Test Date | Signature |
 | John Smith | 2025-05-23 | (an ink or e-signature) |
 
-This type of documentation serve as **legal evidence** that your software works at intended. Of course, you need to show documentation that all functionality works. If you release software without this documentation in place, you're not just risking patient safety — you're risking **regulatory violation, warning letters**, and even **executive imprisonment**.
+Notice that in the expected result column each expected result has a label indicating which requirement it verifies (e.g. [REQ-001], [REQ-002], etc.)
 
-> ⚠️ The signatures in your verification protocol must be **dated before** the release of the software. And yes, the FDA auditor will likely ask you to **demonstrate these tests in person**, and will want to see exactly how they trace to the documented requirements. Notice that in the expected result column each expected result has a label indicating which requirement it verifies (e.g. [REQ-001], [REQ-002], etc.)
+> ⚠️ This type of documentation serve as **legal evidence** that your software works at intended. Of course, you need to show documentation that all functionality works. 
+>
+> ⚠️ The auditor will likely ask you to **demonstrate these tests in person**, and will want to see exactly how they trace to the documented requirements. 
+> 
+> ⚠️ If you release software without this documentation in place, you're not just risking patient safety — you're risking **regulatory violation, warning letters**, and even **executive imprisonment**.
+>
+> ⚠️ Each of these documents need to be signed (either ink, or electronically, using a valid electronic signature). Note: The signatures in your verification protocol must be **dated before** the release of the software. 
 
 ## The Traditional Approach: Manual Testing
 
@@ -118,11 +150,18 @@ There are a lot of ways to implement unit tests in a regulated environment. Here
 #### Software specific guidelines - Gherkin syntax
 The FDA does not have specific rules or guidelines for software requirements (vs hardware requirements). However, over a decade of experience writing unit tests across a lot of companies, I've found that Gherkin syntax [https://cucumber.io/docs/gherkin/] (Given, When, Then) is a concise and simple way to write requirements for software. 
 
+Here are some examples of Gherkin syntax
+
 | Gherkin syntax | Not Gherkin syntax |
 | -------------- | ------------------ |
 | **Given** the Login screen is displayed, **when** the Login button is tapped, **then** the App shall attempt to login. | The app shall allow users to log in when the login button is tapped. |
 | **Given** the Infusion Screen is presented, **when** the Start button is pressed, **then** the device shall begin infusion within 2 seconds. | The device shall begin infusion within 2 seconds after pressing the Start button. |
 | **Given** the temperature sensor is active, **when** the system records a temperature, **then** the value shall be within ±0.1°C of the actual temperature. | The system should record the patient's temperature accurately. |
+
+From cucumber's website
+- "[Given](https://cucumber.io/docs/gherkin/reference#given) steps are used to describe the initial context of the system - the scene of the scenario. It is typically something that happened in the past. The purpose of Given steps is to put the system in a known state before the user (or external system) starts interacting with the system (in the When steps). Avoid talking about user interaction in Given's. If you were creating use cases, Given's would be your preconditions."
+- "[When](https://cucumber.io/docs/gherkin/reference#when) steps are used to describe an event, or an action. This can be a person interacting with the system, or it can be an event triggered by another system. **Implementation details should be hidden in the step definitions.** Imagine it's 1922. Most software does something people could do manually (just not as efficiently). Try hard to come up with examples that don't make any assumptions about technology or user interface. Imagine it's 1922, when there were no computers."
+- "[Then](https://cucumber.io/docs/gherkin/reference#then) steps are used to describe an expected outcome, or result." ([See FDA's guidelines of requirements](#rules-on-fda-requirement-writing))
 
 ### Examples of how to write unit tests in a regulated environment
 It's important to write your unit tests function names in a clear way so that other developers know what it is testing. If it's not clear, it's hard to maintain.
@@ -130,7 +169,7 @@ It's important to write your unit tests function names in a clear way so that ot
 | ------------- | ------------ |
 | func test_UIComponents() | func test_GivenTheLoginViewHasLoaded_ThenUsernameAndPasswordTextfieldsAndALoginButtonShallBeDisplayedAndNoErrorsShallBeDisplayed() |
 | func test_ValidCredentialsLogin() | func test_GivenValidCredentialsAreProvided_WhenTheLoginButtonIsTapped_ThenTheHomeScreenShallDisplay() |
-| func test_InvalidCredentialsLogin() | func test_GivenAnInvalidEmailIsProvided_WhenTheLoginButtonIsTapped_ThenItShallDisplayAnErrorCommunicatingThatTheEmailIsInvalid()<br>func test_GivenAPasswordThatDoesNotHaveACaptialLetter_WhenTheLoginButtonIsTapped_ThenItShallDisplayAnErrorCommunicatingThatThePasswordNeedsToHaveACaptialLetter()<br>func test_GivenAPasswordThatDoesNotHaveALowercaseLetter_WhenTheLoginButtonIsTapped_ThenItShallDisplayAnErrorCommunicatingThatThePasswordNeedsToHaveALowercaseLetter()<br>func test_GivenAPasswordIsShorterThan8Characters_WhenTheLoginButtonIsTapped_ThenItShallDisplayAnErrorCommunicatingThatThePasswordNeedsToHaveAtLeast8Characters()<br>func test_GivenAnAppropriateUsernameAndPasswordAreProvided_WhenTheLoginButtonIsTappedAndTheServerRespondsWithA403_ThenItShallDisplayAnErrorCommunicatingThatTheUsernamePasswordCombinationIsInvalid() |
+| func test_InvalidCredentialsLogin() | func test_GivenAnInvalidEmailIsProvided_WhenTheLoginButtonIsTapped_ThenItShallDisplayAnErrorCommunicatingThatTheEmailIsInvalid()<br>func test_GivenAPasswordThatDoesNotHaveACapitalLetter_WhenTheLoginButtonIsTapped_ThenItShallDisplayAnErrorCommunicatingThatThePasswordNeedsToHaveACapitalLetter()<br>func test_GivenAPasswordThatDoesNotHaveALowercaseLetter_WhenTheLoginButtonIsTapped_ThenItShallDisplayAnErrorCommunicatingThatThePasswordNeedsToHaveALowercaseLetter()<br>func test_GivenAPasswordIsShorterThan8Characters_WhenTheLoginButtonIsTapped_ThenItShallDisplayAnErrorCommunicatingThatThePasswordNeedsToHaveAtLeast8Characters()<br>func test_GivenAnAppropriateUsernameAndPasswordAreProvided_WhenTheLoginButtonIsTappedAndTheServerRespondsWithA403_ThenItShallDisplayAnErrorCommunicatingThatTheUsernamePasswordCombinationIsInvalid() |
 | func test_NetworkError() | func test_GivenTheLoginButtonIsTapped_WhenTheResponseIsUrlError1009_ThenItShallDisplayAnErrorCommunicatingThatTheDeviceAppearsToBeOffline()<br>func test_GivenTheLoginButtonIsTapped_WhenTheResponseIsUrlError1001_ThenItShallDisplayAnErrorCommunicatingThatTheConnectionAppearsToBeSlowAndTheUserShouldTryAgain()<br>func test_GivenTheLoginButtonIsTapped_WhenTheResponseIsAnyOtherError_ThenItShallDisplayTheStandardDescriptionOfThatError() |
 
 >Notice the the clarity of the unit test. 
@@ -142,12 +181,12 @@ It's important to write your unit tests function names in a clear way so that ot
 > ⚠️ A unit test with the name `NetworkError` is not clear on what network error is being tested. There are dozens to choose from. All of them? Two of them? Just writing `NetworkError` is not clear and makes it hard for future developers to maintain the unit test code base. The good examples make it clear exactly which network errors should be explicitly handled, which which are being treated as generic errors.
 
 ### Writing unit tests that can be turned into written requirements
-In the examples above, notice that through creative use of CamelCase and underscores, I can now easily use a script to read by unit test file and generate the following requirements
+In the examples above, notice that through creative use of CamelCase and underscores, I can now easily use a script to read my unit test file and generate the following requirements
 
 * REQ-001: Given the login view has loaded,  then username and password textfields and a login button shall be displayed and no errors shall be displayed 
 * REQ-002: Given valid credentials are provided, when the login button is tapped, then the home screen shall display
 * REQ-003: Given an invalid email is provided, when the login button is tapped, then it shall display an error communicating that the email is invalid
-* REQ-004: Given a password that does not have a capital letter, when the login button is tapped, then it shall display an error communicating that the password needs to have a captial letter
+* REQ-004: Given a password that does not have a capital letter, when the login button is tapped, then it shall display an error communicating that the password needs to have a capital letter
 * REQ-005: Given a password that does not have a lowercase letter, when the login button is tapped, then it shall display an error communicating that the password needs to have a lowercase letter
 * REQ-006: Given a password is shorter than 8 characters, when the login button is tapped, then it shall display an error communicating that the password needs to have at least 8 characters
 * REQ-007: Given an appropriate username and password are provided, when the login button is tapped and the server responds with a 403, then it shall display an error communicating that the username password combination is invalid 
@@ -238,9 +277,11 @@ func test_GivenTheLoginViewHasLoaded_TheUsernameAndPasswordTextfieldsAndALoginBu
     let usernameField = view.findViewWithIdentifier("usernameTextField") as? UITextField
     let passwordField = view.findViewWithIdentifier("passwordTextField") as? UITextField
     let loginButton = view.findViewWithIdentifier("loginButton") as? UIButton
+    let errorLabel = view.findViewWithIdentifier("errorLabel") as? UILabel
     XCTAssertNotNil(usernameField, "Username text field should exist")
     XCTAssertNotNil(passwordField, "Password text field should exist")
     XCTAssertNotNil(loginButton, "Login button should exist")        
+    XCTAssertEqual(errorLabel?.text, "", "Error label should be empty initially")
 }
 ```
 #### Which can be easily parsed into a requirement document and verification protocol that look like this
@@ -270,7 +311,7 @@ func test_GivenTheLoginViewHasLoaded_ThenAllRequiredElementsShallBePresent() {
 
 ❌ **Don't**: Write vague test names
 ```swift
-func testLogin() // Unclear what's being tested
+func testLogin() // What about the login is being tested?
 ```
 
 ✅ **Do**: Be specific and follow the Given-When-Then pattern
