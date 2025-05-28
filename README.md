@@ -55,7 +55,7 @@ When that audit happens, the FDA expects **evidence** that your device works **a
 | Step # | Procedure | Expected Result | Observed Result or "As Expected" (A/E) | Pass / Fail |
 |------- | --------- | --------------- | -------------------------------------- | ----------- |
 | 1. | 1. Navigate to the Login screen. | Verify that username and password textfields and a login button are displayed and no errors are displayed. [REQ-001] | A/E | Pass |
-| 2. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password with less than 8 characters.<br>3. Tap the Login button. | Verify that the home screen displays [REQ-002] | A/E | Pass |
+| 2. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password.<br>3. Tap the Login button. | Verify that the home screen displays [REQ-002] | A/E | Pass |
 | 3. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password with 8 characters but is all lowercase.<br>3. Tap the Login button. | Verify that the App displays an error communicating that the password needs to at least 1 capital letter [REQ-004] | A/E | Pass |
 | | ... more tests (usually 100's or even 1000's) |
 | | **Test Signature Page** |
@@ -143,9 +143,9 @@ There are a lot of ways to implement unit tests in a regulated environment. Here
 ### Rules on FDA requirement writing
 | Rule | Good Example | Bad Example |
 |------|--------------|-------------|
-| **Use "shall" instead of should, ought or other vague terms** | "The system shall record the patient's temperature within ±0.1°C of actual value." | "The system should record the patient's temperature accurately." |
-| **Avoid vague terms and ensure accurate descriptions** | "Given the Login screen is displayed, when the Login button is tapped, the App shall attempt to login." | "The app should allow users to log in." |
-| **Write testable requirements** | "Given the Infusion Screen is presented, when the Start button is pressed, the device shall begin infusion within 2 seconds." | "The device should start infusion quickly after pressing the Start button." |
+| **Use "shall" instead of should, ought or other vague terms** | "The system shall record the patient's temperature within ±0.1°C of actual value." | "The system should record the patient's temperature within ±0.1°C of actual value." |
+| **Avoid vague terms and ensure accurate descriptions** | "The system shall record the patient's temperature within ±0.1°C of actual value." | "The system should record the patient's temperature accurately." |
+| **Write testable requirements** | "The injection tube shall be made of medical grade thermoplastic polyurethane" | "The injection tube shall be made of a good material for the intended purpose." |
 
 #### Software specific guidelines - Gherkin syntax
 The FDA does not have specific rules or guidelines for software requirements (vs hardware requirements). However, over a decade of experience writing unit tests across a lot of companies, I've found that Gherkin syntax [https://cucumber.io/docs/gherkin/] (Given, When, Then) is a concise and simple way to write requirements for software. 
@@ -216,7 +216,7 @@ But the FDA **ALSO** needs to see the verification protocol, which is the writte
 | Step # | Procedure | Expected Result | Observed Result or "As Expected" (A/E) | Pass / Fail |
 |------- | --------- | --------------- | -------------------------------------- | ----------- |
 | 1. | 1. Navigate to the Login screen. | Verify that username and password textfields and a login button are displayed and no errors are be displayed. [REQ-001] | A/E | Pass |
-| 2. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password with less than 8 characters.<br>3. Tap the Login button. | Verify that the home screen displays [REQ-002] | A/E | Pass |
+| 2. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password.<br>3. Tap the Login button. | Verify that the home screen displays [REQ-002] | A/E | Pass |
 | 3. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password with 8 characters but is all lowercase.<br>3. Tap the Login button. | Verify that the App displays an error communicating that the password needs to at least 1 capital letter [REQ-004] | A/E | Pass |
 | | ... more tests (usually 100's or even 1000's) |
 | | **Test Signature Page** |
