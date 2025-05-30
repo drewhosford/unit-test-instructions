@@ -21,7 +21,8 @@
   - [Writing unit tests that can be turned into written requirements](#writing-unit-tests-that-can-be-turned-into-written-requirements)
 - [The Verification Protocol](#the-verification-protocol)
   - [Example Verification Protocol](#example-verification-protocol)
-  - [Swift Example](#swift-example)
+  - [Mobile App - Swift Example](#mobile-app-example-in-swift)
+  - [Backend - Golang Example](#backend-example-in-golang)
 - [Quick Start Guide](#quick-start-guide)
   - [Writing Your First Medical Device Unit Test](#writing-your-first-medical-device-unit-test)
   - [Common Pitfalls to Avoid](#common-pitfalls-to-avoid)
@@ -225,7 +226,7 @@ But the FDA **ALSO** needs to see the verification protocol, which is the writte
 
 > We can automate the verification test steps using comments in the code.
 
-### Swift Example
+### Mobile App Example in Swift
 Here is code for a login screen code in Swift. It shows a username text field, a password text field, and a login button
 ```
 var body: some View {
@@ -292,6 +293,146 @@ func test_GivenTheLoginViewHasLoaded_TheUsernameAndPasswordTextfieldsAndALoginBu
 | Step # | Procedure | Expected Result | Observed Result or "As Expected" (A/E) | Pass / Fail |
 |------- | --------- | --------------- | -------------------------------------- | ----------- |
 | 1. | 1. Navigate to the Login screen. | Verify that username and password textfields and a login button are displayed and no errors are be displayed. [REQ-001] | |  |
+
+### Backend Example in Golang
+
+Here is code for a backend written in Golang
+
+#### The Router
+```
+func SetupRouter() *gin.Engine {
+	r := gin.Default()
+
+	v1 := r.Group("/v1")
+	{
+		users := v1.Group("/users")
+		{
+			users.GET("", controller.GetUsers)
+			users.GET("/:id", controller.GetUser)
+			users.POST("", controller.CreateUser)
+			users.PUT("/:id", controller.UpdateUser)
+			users.DELETE("/:id", controller.DeleteUser)
+		}
+	}
+
+	return r
+}
+```
+#### The Controller
+```
+func GetUser(c *gin.Context) {
+	var user model.User
+	if err := model.DB.Where("id = ?", c.Param("id")).First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": user})
+}
+
+// GetUsers returns all users
+func GetUsers(c *gin.Context) {
+	var users []model.User
+	model.DB.Find(&users)
+	c.JSON(http.StatusOK, gin.H{"data": users})
+}
+```
+#### The Model
+```
+type User struct {
+	ID          uint      `gorm:"primaryKey" json:"id"`
+	FirstName   string    `gorm:"not null" json:"first_name" binding:"required,min=1"`
+	LastName    string    `json:"last_name"`
+	DateOfBirth time.Time `json:"date_of_birth"`
+	Ethnicity   string    `json:"ethnicity"`
+	Role        string    `json:"role"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+```
+#### Below is example on how to implement a unit test so that the verification protocol can be generated from comments
+```
+func Test_WhenAGetRequestIsMadeToThe_S_v1_S_usersEndpoint_GivenTheUserTableIsEmpty_ThenAnEmptyArrayShallBeReturned(t *testing.T) {
+	// Setup the test environment
+	clearTestDB()
+	r := setupTestRouter()
+
+	// S1: With the users table empty, make a GET request to /v1/users
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/users", nil)
+	r.ServeHTTP(w, req)
+
+	// V1: Verify that response is 200 OK with empty array
+	assert.Equal(t, http.StatusOK, w.Code)
+	var response map[string][]model.User
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Empty(t, response["data"])
+}
+
+func Test_WhenAGetRequestIsMadeToThe_S_v1_S_users_S__C_idEndpoint_GivenANonExistentUserID_ThenA404ErrorShallBeReturned(t *testing.T) {
+	// Setup the test environment
+	clearTestDB()
+	r := setupTestRouter()
+
+	// S1: Make GET request to /v1/users/:id with non-existent ID
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/users/999", nil)
+	r.ServeHTTP(w, req)
+
+	// V1: Verify that response is 404 Not Found
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	var response map[string]string
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, "User not found", response["error"])
+}
+
+func Test_WhenAGetRequestIsMadeToThe_S_v1_S_users_S__C_idEndpoint_GivenAValidID_ThenTheUserShallBeReturned(t *testing.T) {
+	// Setup the test environment
+	clearTestDB()
+	r := setupTestRouter()
+
+	// Create a test user in the database
+	user := model.User{
+		FirstName:   "Jane",
+		LastName:    "Smith",
+		DateOfBirth: time.Date(1985, 1, 1, 0, 0, 0, 0, time.UTC),
+		Ethnicity:   "Asian",
+		Role:        "Doctor",
+	}
+	model.DB.Create(&user)
+
+	// S1: Make GET request to /v1/users/:id endpoint with a valid user ID
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/users/" + strconv.FormatUint(uint64(user.ID), 10), nil)
+	r.ServeHTTP(w, req)
+
+	// V1: Verify that response is 200 OK with the requested user
+	assert.Equal(t, http.StatusOK, w.Code)
+	var response map[string]model.User
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, user.ID, response["data"].ID)
+	assert.Equal(t, user.FirstName, response["data"].FirstName)
+}
+```
+
+#### Which can be easily parsed into a requirement document and verification protocol that look like this
+
+* REQ-001: When a GET request is made to the /v1/users endpoint, given the user table is empty, then an empty array shall be returned
+* REQ-002: When a GET request is made to the /v1/users/:id endpoint, given a non existent user ID, then a 404 error shall be returned
+* REQ-003: When a GET request is made to the /v1/users/:id endpoint, given a valid ID, then the user shall be returned
+
+
+| Step # | Procedure | Expected Result | Observed Result or "As Expected" (A/E) | Pass / Fail |
+|------- | --------- | --------------- | -------------------------------------- | ----------- |
+| 1. | 1. With the users table empty, make a GET request to /v1/users. | Verify that response is 200 OK with empty array. [REQ-001] | |  |
+| 2. | 1. Make GET request to /v1/users/:id with non-existent ID. | Verify that response is 404 Not Found. [REQ-002] | |  |
+| 3. | 1. Make GET request to /v1/users/:id endpoint with a valid user ID. | Verify that response is 200 OK with the requested user. [REQ-003] | |  |
+
+By now, you have probably noticed two things:
+1. I've switched the requirement around to have the "When" statement first. Although Gherkin syntax wants the "Given" statement first, I like to have all similar request tests together so that I can see where the gaps are. Make Gherkin syntax work for you. You don't work for Gherkin syntax. The FDA doesn't care about Gherkin syntax as long as the requirement meets [their expectations](#rules-on-fda-requirement-writing). 
+2. There isn't a test of a GET to `v1/users` with a populated table. Grouping similar tests together like this helps identify testing gaps.
 
 ## Quick Start Guide
 

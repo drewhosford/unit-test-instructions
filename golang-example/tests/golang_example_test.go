@@ -60,7 +60,7 @@ func Test_WhenAGetRequestIsMadeToThe_S_v1_S_usersEndpoint_GivenTheUserTableIsEmp
 	clearTestDB()
 	r := setupTestRouter()
 
-	// S1: Make a GET request to /v1/users
+	// S1: With the users table empty, make a GET request to /v1/users
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/users", nil)
 	r.ServeHTTP(w, req)
