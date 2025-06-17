@@ -598,49 +598,75 @@ Below is a 5x5 risk matrix illustrating the relationship between severity and pr
 
 #### Example Hazard Analysis
 
-Below is an example hazard analysis table for an insulin pump
-The hazard and severity keep their relationship. A given hazard always has the same severity. The thing that changes is the probability.
-- **Probability (initial)** describes *"if an accidental mistake in the hardware or code was made, and no mitigations were implemented, how often could this happen?"*
-- **Risk (initial)** is (initial probability) x (severity)
-- **Proability (mitigated)** describes *"if an accidental mistake in the hardware or code was made, and the mitigations were implemented, how often could this happen?"*
-- **Risk (mitigated)** is (mitigated probability) x (severity)
+Below is an example hazard analysis table for an insulin pump.
 
-| Hazard                  | Severity | Situation                          | Probability (Initial) | Risk (Initial) | Mitigation                  | Probability (Mitigated) | Risk (Mitigated) | Acceptability |
-|-------------------------|----------|------------------------------------|------------------------|----------------|-----------------------------|--------------------------|------------------|---------------|
-| Delay of treatment | 2 (Minor)       | Insulin dispersement mechanism breaks | 3 (Occasional)         | 6 (Moderate) | HZ:1 Device monitors dispersement mechanism to check for failures <br> HZ:2 Device reports to user to take device in for repair      | 2 (Remote)              | 4 (Low)         | Acceptable    |
-| Patient faints     | 3 (Serious)        | Bluetooth controls are hacked and attacker causes device to continue to disperse insulin.           | 3 (Occassional)           | 15 (High)      | HZ:3 Dispensor never allows more than a minimal dosage at a time <br> HZ:4 Dispensor hardware is designed to waits X seconds between dosages regardless of instructions from control software <br> HZ:5 Bluetooth discovery mode is disabled by default <br> HZ:6 Bluetooth implements strong password pairing <br> HZ:7 Mobile App paired with device requires a secure login | 2 (Remote)              | 6 (Moderate)         | Acceptable    |
+Note that the **severity** of a hazard remains constant—it represents the worst-case consequence of that hazard. What can change is the **probability** of occurrence, depending on whether mitigations are in place.
 
-Notice how the mitigations reduce the probability and that that is what turns an unsafe device into a safe device.
+- **Probability (Initial)**: Assumes no mitigations are applied. *"If an accidental error occurred in hardware or software, how often could this realistically happen?"*
+- **Risk (Initial)**: Calculated as `Initial Probability × Severity`.
+- **Probability (Mitigated)**: Estimated probability after all applicable mitigations are implemented.
+- **Risk (Mitigated)**: Calculated as `Mitigated Probability × Severity`.
 
-### Bringing it all together
+| Hazard            | Severity       | Situation                                                    | Probability (Initial) | Risk (Initial) | Mitigation                                                                                                                                                  | Probability (Mitigated) | Risk (Mitigated) | Acceptability |
+|-------------------|----------------|---------------------------------------------------------------|------------------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------|------------------|---------------|
+| Delay of treatment | 2 (Minor)      | Insulin dispersion mechanism fails to activate               | 3 (Occasional)         | 6 (Moderate)   | **HZ:1** Device monitors dispersion mechanism for faults  <br> **HZ:2** Device alerts user to seek repair                                                    | 2 (Remote)               | 4 (Low)          | Acceptable    |
+| Patient faints     | 3 (Serious)     | Bluetooth interface is compromised and insulin over-delivered | 5 (Frequent)           | 15 (High)      | **HZ:3** Dose limit per actuation enforced in firmware  <br> **HZ:4** Dispersion hardware enforces a delay between doses  <br> **HZ:5** Bluetooth discovery disabled by default  <br> **HZ:6** Strong pairing requirements  <br> **HZ:7** Secure login required in mobile app | 2 (Remote)               | 6 (Moderate)     | Acceptable    |
 
-Each hazard mitigation ties directly to a system requirement, that flushes out the details of the hazard mitigation
-* SYS:1 The device shall require that the user logs in with secure username and password **[HZ:7]**
-* SYS:2 The device shall require that the username is an email **[HZ:7]**
-* SYS:3 The device shall require that the password meets complexity requirements **[HZ:7]**
+This table illustrates how the introduction of appropriate mitigations reduces the **probability** of harm, converting an **unacceptable risk** into an **acceptable one**.
 
-Did you notice the **[ HZ:7 ]** backtrace tied to the requirement? This shows to any FDA auditor, that SYS:1 implement hazard mitigation HZ:7.
+---
 
-Remember our requirements above? We now tack on the tags that show what system design inputs they implement
-* RQ:1: Given the login view has loaded, then username and password textfields and a login button shall be displayed and no errors shall be displayed [SYS:1]
-* RQ:2: Given valid credentials are provided, when the login button is tapped, then the home screen shall display. [SYS:1]
-* RQ:3: Given an invalid email is provided, when the login button is tapped, then it shall display an error communicating that the email is invalid. [SYS:1] [SYS:2]
+### Bringing It All Together
 
-Remember this table?
+Each hazard mitigation corresponds to a **system requirement** that details how the mitigation is to be implemented:
 
-**VER:1 Verification Protocool for the App**
+- **SYS:1** The device shall require secure login with username and password. <span style="color:gray">(*[HZ:7]*)</span>  
+- **SYS:2** The device shall require the username to be a valid email address. <span style="color:gray">(*[HZ:7]*)</span>  
+- **SYS:3** The password shall comply with defined complexity rules. <span style="color:gray">(*[HZ:7]*)</span>  
+
+Note the backtrace annotations (e.g., `[HZ:7]`), which demonstrate how each requirement directly supports a specific hazard mitigation.
+
+---
+
+### Linking Requirements to Software Specifications
+
+The system requirements then flow down to software-level requirements:
+
+- **RQ:1** Given the login view is displayed, the username and password fields and login button shall be visible with no errors. <span style="color:gray">(*[SYS:1]*)</span>  
+- **RQ:2** Given valid credentials, tapping the login button shall navigate to the home screen. <span style="color:gray">(*[SYS:1]*)</span>  
+- **RQ:3** Given an invalid email, tapping the login button shall show an appropriate error message. <span style="color:gray">(*[SYS:1], [SYS:2]*)</span>  
+
+---
+
+### Example Verification Protocol
+
+These requirements are verified through a defined software verification protocol:
+
+**VER:1 – Verification Protocol for the Mobile App**
+
 | Step # | Procedure | Expected Result | Observed Result or "As Expected" (A/E) | Pass / Fail |
 |------- | --------- | --------------- | -------------------------------------- | ----------- |
 | 1. | 1. Navigate to the Login screen. | Verify that username and password textfields and a login button are displayed and no errors are be displayed. [RQ:1] | A/E | Pass |
 | 2. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password.<br>3. Tap the Login button. | Verify that the home screen displays [RQ:2] | A/E | Pass |
 
-## Traceability Matrix - Evidence that everything comes together
+---
 
-| Hazard | System Requirement (Design Input) | Software Unit Requirement (Design Output) | Verification |
-| ------ | ------------ | ------------- | ------------ |
-| HZ:7 | SYS:1 | RQ:1 | VER:1 |
-| HZ:7 | SYS:1 | RQ:2 | VER:1 |
-| HZ:7 | SYS:1 | RQ:3 | VER:1 |
-| HZ:7 | SYS:2 | RQ:3 | VER:1 |
+## Traceability Matrix – Evidence That Everything Connects
 
-This traceability matrix demonstrates how each hazard is linked to a system requirement, which are linked to software requirements, which are linked to verifications. Of course, the traceability matrix will show this relationship for all hazards (not just HZ:7). But you can then show any auditor that all hazards have mitigations, and since your verification protocol shows that all tests passed, you can confidently show any auditor that all your mitigations were confirmed to be implemented and that your device is safe.
+This matrix demonstrates how each hazard is addressed through a complete and verifiable design and testing process:
+
+| Hazard | System Requirement (Design Input) | Software Requirement (Design Output) | Verification |
+|--------|-----------------------------------|--------------------------------------|--------------|
+| HZ:7   | SYS:1                             | RQ:1                                 | VER:1        |
+| HZ:7   | SYS:1                             | RQ:2                                 | VER:1        |
+| HZ:7   | SYS:1                             | RQ:3                                 | VER:1        |
+| HZ:7   | SYS:2                             | RQ:3                                 | VER:1        |
+
+This traceability shows how each **hazard** leads to one or more **system-level requirements**, which in turn flow down to **software-level requirements**, each verified through a defined test protocol.
+
+> With this structure in place, you can demonstrate to any regulatory reviewer that:
+> - All hazards have been identified and mitigated.
+> - All mitigations are tied to actionable, traceable requirements.
+> - All requirements have been verified.
+> - Therefore, the software contributes to a **safe and compliant medical device**.
+
