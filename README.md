@@ -1,12 +1,5 @@
 # Writing Unit Tests for Medical Devices: A Regulated Approach
 
-> 🆕 **What's New**
-> - Added Quick Start Guide with project setup templates
-> - Enhanced Implementation Tips with practical examples
-> - New section on Common Pitfalls to avoid
-> - Expanded Guidelines for Writing Verification Statements
-> - Added Test Data Management best practices
-
 ## Table of Contents
 - [Background](#background)
   - [Legal evidence that your software works](#legal-evidence-that-your-software-works)
@@ -55,15 +48,15 @@ When that audit happens, the FDA expects **evidence** that your device works **a
 
 | Step # | Procedure | Expected Result | Observed Result or "As Expected" (A/E) | Pass / Fail |
 |------- | --------- | --------------- | -------------------------------------- | ----------- |
-| 1. | 1. Navigate to the Login screen. | Verify that username and password textfields and a login button are displayed and no errors are displayed. [REQ-001] | A/E | Pass |
-| 2. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password.<br>3. Tap the Login button. | Verify that the home screen displays [REQ-002] | A/E | Pass |
-| 3. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password with 8 characters but is all lowercase.<br>3. Tap the Login button. | Verify that the App displays an error communicating that the password needs to at least 1 capital letter [REQ-004] | A/E | Pass |
+| 1. | 1. Navigate to the Login screen. | Verify that username and password textfields and a login button are displayed and no errors are displayed. [RQ:1] | A/E | Pass |
+| 2. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password.<br>3. Tap the Login button. | Verify that the home screen displays [RQ:2] | A/E | Pass |
+| 3. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password with 8 characters but is all lowercase.<br>3. Tap the Login button. | Verify that the App displays an error communicating that the password needs to at least 1 capital letter [RQ:4] | A/E | Pass |
 | | ... more tests (usually 100's or even 1000's) |
 | | **Test Signature Page** |
 | Tester Name | Test Date | Signature |
 | John Smith | 2025-05-23 | (an ink or e-signature) |
 
-Notice that in the expected result column each expected result has a label indicating which requirement it verifies (e.g. [REQ-001], [REQ-002], etc.)
+Notice that in the expected result column each expected result has a label indicating which requirement it verifies (e.g. [RQ:1], [RQ:2], etc.)
 
 > ⚠️ This type of documentation serve as **legal evidence** that your software works at intended. Of course, you need to show documentation that all functionality works. 
 >
@@ -184,16 +177,16 @@ It's important to write your unit tests function names in a clear way so that ot
 ### Writing unit tests that can be turned into written requirements
 In the examples above, notice that through creative use of CamelCase and underscores, I can now easily use a script to read my unit test file and generate the following requirements
 
-* REQ-001: Given the login view has loaded,  then username and password textfields and a login button shall be displayed and no errors shall be displayed 
-* REQ-002: Given valid credentials are provided, when the login button is tapped, then the home screen shall display
-* REQ-003: Given an invalid email is provided, when the login button is tapped, then it shall display an error communicating that the email is invalid
-* REQ-004: Given a password that does not have a capital letter, when the login button is tapped, then it shall display an error communicating that the password needs to have a capital letter
-* REQ-005: Given a password that does not have a lowercase letter, when the login button is tapped, then it shall display an error communicating that the password needs to have a lowercase letter
-* REQ-006: Given a password is shorter than 8 characters, when the login button is tapped, then it shall display an error communicating that the password needs to have at least 8 characters
-* REQ-007: Given an appropriate username and password are provided, when the login button is tapped and the server responds with a 403, then it shall display an error communicating that the username password combination is invalid 
-* REQ-008: Given the login button is tapped, when the response is url error 1009, then it shall display an error communicating that the device appears to be offline
-* REQ-009: Given the login button is tapped, when the response is url error 1001, then it shall display an error communicating that the connection appears to be slow and the user should try again
-* REQ-0010: Given the login button is tapped, when the response is any other error, then it shall display the standard description of that error 
+* RQ:1: Given the login view has loaded,  then username and password textfields and a login button shall be displayed and no errors shall be displayed 
+* RQ:2: Given valid credentials are provided, when the login button is tapped, then the home screen shall display
+* RQ:3: Given an invalid email is provided, when the login button is tapped, then it shall display an error communicating that the email is invalid
+* RQ:4: Given a password that does not have a capital letter, when the login button is tapped, then it shall display an error communicating that the password needs to have a capital letter
+* RQ:5: Given a password that does not have a lowercase letter, when the login button is tapped, then it shall display an error communicating that the password needs to have a lowercase letter
+* RQ:6: Given a password is shorter than 8 characters, when the login button is tapped, then it shall display an error communicating that the password needs to have at least 8 characters
+* RQ:7: Given an appropriate username and password are provided, when the login button is tapped and the server responds with a 403, then it shall display an error communicating that the username password combination is invalid 
+* RQ:8: Given the login button is tapped, when the response is url error 1009, then it shall display an error communicating that the device appears to be offline
+* RQ:9: Given the login button is tapped, when the response is url error 1001, then it shall display an error communicating that the connection appears to be slow and the user should try again
+* RQ:10: Given the login button is tapped, when the response is any other error, then it shall display the standard description of that error 
 
 > **The upside with this approach:**
 > * ✅ These are valid requirements that the FDA will accept. 
@@ -216,9 +209,9 @@ But the FDA **ALSO** needs to see the verification protocol, which is the writte
 ### Example Verification Protocol
 | Step # | Procedure | Expected Result | Observed Result or "As Expected" (A/E) | Pass / Fail |
 |------- | --------- | --------------- | -------------------------------------- | ----------- |
-| 1. | 1. Navigate to the Login screen. | Verify that username and password textfields and a login button are displayed and no errors are be displayed. [REQ-001] | A/E | Pass |
-| 2. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password.<br>3. Tap the Login button. | Verify that the home screen displays [REQ-002] | A/E | Pass |
-| 3. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password with 8 characters but is all lowercase.<br>3. Tap the Login button. | Verify that the App displays an error communicating that the password needs to at least 1 capital letter [REQ-004] | A/E | Pass |
+| 1. | 1. Navigate to the Login screen. | Verify that username and password textfields and a login button are displayed and no errors are be displayed. [RQ:1] | A/E | Pass |
+| 2. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password.<br>3. Tap the Login button. | Verify that the home screen displays [RQ:2] | A/E | Pass |
+| 3. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password with 8 characters but is all lowercase.<br>3. Tap the Login button. | Verify that the App displays an error communicating that the password needs to at least 1 capital letter [RQ:4] | A/E | Pass |
 | | ... more tests (usually 100's or even 1000's) |
 | | **Test Signature Page** |
 | Tester Name | Test Date | Signature |
@@ -287,12 +280,12 @@ func test_GivenTheLoginViewHasLoaded_TheUsernameAndPasswordTextfieldsAndALoginBu
 ```
 #### Which can be easily parsed into a requirement document and verification protocol that look like this
 
-* REQ-001: Given the login view has loaded,  then username and password textfields and a login button shall be displayed and no errors shall be displayed 
+* RQ:1: Given the login view has loaded,  then username and password textfields and a login button shall be displayed and no errors shall be displayed 
 
 
 | Step # | Procedure | Expected Result | Observed Result or "As Expected" (A/E) | Pass / Fail |
 |------- | --------- | --------------- | -------------------------------------- | ----------- |
-| 1. | 1. Navigate to the Login screen. | Verify that username and password textfields and a login button are displayed and no errors are be displayed. [REQ-001] | |  |
+| 1. | 1. Navigate to the Login screen. | Verify that username and password textfields and a login button are displayed and no errors are be displayed. [RQ:1] | |  |
 
 ### Backend Example in Golang
 
@@ -419,20 +412,24 @@ func Test_WhenAGetRequestIsMadeToThe_S_v1_S_users_S__C_idEndpoint_GivenAValidID_
 
 #### Which can be easily parsed into a requirement document and verification protocol that look like this
 
-* REQ-001: When a GET request is made to the /v1/users endpoint, given the user table is empty, then an empty array shall be returned
-* REQ-002: When a GET request is made to the /v1/users/:id endpoint, given a non existent user ID, then a 404 error shall be returned
-* REQ-003: When a GET request is made to the /v1/users/:id endpoint, given a valid ID, then the user shall be returned
+* RQ:1: When a GET request is made to the /v1/users endpoint, given the user table is empty, then an empty array shall be returned
+* RQ:2: When a GET request is made to the /v1/users/:id endpoint, given a non existent user ID, then a 404 error shall be returned
+* RQ:3: When a GET request is made to the /v1/users/:id endpoint, given a valid ID, then the user shall be returned
 
 
 | Step # | Procedure | Expected Result | Observed Result or "As Expected" (A/E) | Pass / Fail |
 |------- | --------- | --------------- | -------------------------------------- | ----------- |
-| 1. | 1. With the users table empty, make a GET request to /v1/users. | Verify that response is 200 OK with empty array. [REQ-001] | |  |
-| 2. | 1. Make GET request to /v1/users/:id with non-existent ID. | Verify that response is 404 Not Found. [REQ-002] | |  |
-| 3. | 1. Make GET request to /v1/users/:id endpoint with a valid user ID. | Verify that response is 200 OK with the requested user. [REQ-003] | |  |
+| 1. | 1. With the users table empty, make a GET request to /v1/users. | Verify that response is 200 OK with empty array. [RQ:1] | |  |
+| 2. | 1. Make GET request to /v1/users/:id with non-existent ID. | Verify that response is 404 Not Found. [RQ:2] | |  |
+| 3. | 1. Make GET request to /v1/users/:id endpoint with a valid user ID. | Verify that response is 200 OK with the requested user. [RQ:3] | |  |
 
 By now, you have probably noticed two things:
 1. I've switched the requirement around to have the "When" statement first. Although Gherkin syntax wants the "Given" statement first, I like to have all similar request tests together so that I can see where the gaps are. Make Gherkin syntax work for you. You don't work for Gherkin syntax. The FDA doesn't care about Gherkin syntax as long as the requirement meets [their expectations](#rules-on-fda-requirement-writing). 
 2. There isn't a test of a GET to `v1/users` with a populated table. Grouping similar tests together like this helps identify testing gaps.
+
+
+## Showing that your software is safe
+
 
 ## Quick Start Guide
 
@@ -442,9 +439,9 @@ Follow this template for clear, traceable tests:
 
 ```swift
 func test_GivenTheLoginViewHasLoaded_ThenAllRequiredElementsShallBePresent() {
-    // Arrange: Initial conditions
-    // Act: Perform the test steps
-    // Assert: Verify the outcomes
+    // S1: Step to setup the initial conditions
+    // S2: Perform the actual test steps
+    // V1: Verify the outcome(s)
 }
 ```
 
@@ -457,10 +454,8 @@ func testLogin() // What about the login is being tested?
 
 ✅ **Do**: Be specific and follow the Given-When-Then pattern
 ```swift
-func test_GivenValidCredentials_WhenLoginButtonTapped_ThenUserShallBeAuthenticated()
+func test_GivenValidCredentials_WhenTheLoginButtonIsTapped_ThenUserShallBeAuthenticated()
 ```
-
-### Advanced Topics
 
 #### Test Data Management
 - Use clear, traceable test data
@@ -478,7 +473,7 @@ func test_GivenValidCredentials_WhenLoginButtonTapped_ThenUserShallBeAuthenticat
 | Guideline | Requirement | Good Example | Bad Example |
 |------|------------ | ------------ | ----------- |
 | **Start with "Verify" to make it clear this is a verification** | REQ-011 When the login is successful the home screen shall be displayed | "Verify that the home screen is displayed" | "The home screen displays" |
-| **Use the requirement language as much as possible** | REQ-008: Given the login button is tapped,  when the response is url error 1009,  then it shall display an error communicating that the device appears to be offline | "Verify that the error communicates that the device appears to be offline" | "Verify that device says it's offline" |
+| **Use the requirement language as much as possible** | RQ:8: Given the login button is tapped,  when the response is url error 1009,  then it shall display an error communicating that the device appears to be offline | "Verify that the error communicates that the device appears to be offline" | "Verify that device says it's offline" |
 | **Reference the requirement being verified** | REQ-012 Given the Login screen is displayed, then the password field shall be a secure password field that obscures entered text | "Verify that password field is a secure password field that obsures the entered text [REQ-012]" | "Verify that password field is a secure password field that obsures the entered text" |
 
 ### Implementation Tips
@@ -508,6 +503,144 @@ Unit tests aren’t just for convenience. With the right process, they can becom
 - ✅ Manual verification is expensive, error-prone, and redundant when you have strong unit test coverage.
 - ✅ You can turn unit tests into your **regulatory evidence**, saving time and improving reliability.
 
----
 
 Let your tests *become* your protocols. Let your code *prove* your compliance.
+
+# Advanced Topics
+
+## Showing Your Software is Safe
+
+### Software Safety Hazard Analysis
+
+Once you've demonstrated that your software functions correctly, the next question—often raised by FDA auditors—is: **"Can you show that your software is safe?"**  
+The standard way to address this is by performing a **safety hazard analysis**.
+
+A **hazard analysis** is the structured method by which we assess whether the risks posed by a system are **acceptable** or require **mitigation**. For software, this involves systematically identifying how software behavior could lead to hazardous situations, estimating the potential for harm, and determining what to do about it.
+
+There are many valid approaches to conducting a software hazard analysis. The method I present here has proven to be practical and effective—particularly because it strikes a balance between ensuring safety and enabling innovation.
+
+---
+
+#### A Reality Check on Risk
+
+Some assume that if a medical device can *ever* harm a patient, it should automatically be rejected by regulators. But that perspective doesn’t align with real-world medicine—or with the regulatory approach.
+
+Consider a **tongue depressor**: it can cause splinters. A **stethoscope** could cut a patient if poorly manufactured. By this logic, nearly every medical device would fail approval. The reality is:
+
+> **All medical devices carry some risk.**  
+> **Regulatory bodies like the FDA do not require zero risk—they require acceptable, well-managed risk.**
+
+---
+
+### Risk Acceptability using a Hazard Analysis
+
+Regulators use the following two key dimensions to determine acceptability of risk:
+
+1. **Severity** – *If harm occurs, how bad is it?*  
+   Does the patient experience minor discomfort? Require medical intervention? Is the outcome fatal?
+
+2. **Probability (or Likelihood)** – *How likely is the harm to occur?*  
+   Is the event expected once per 100 uses? Once per 10,000? Is it theoretical only?
+
+I typically use a **five-level scale** for both **severity** and **probability** to score and classify risks consistently:
+
+- **Severity**: 1 (Negligible) to 5 (Catastrophic)  
+- **Probability**: 1 (Rare/Improbable) to 5 (Frequent)
+
+This scoring forms the basis for risk evaluation and control decisions, guiding whether a hazard:
+- Is acceptable as-is
+- Requires mitigation
+- Must be eliminated
+
+
+I like to use 5 categories for severity and probability, that I like to ranked on a scale from 1 to 5:
+
+---
+
+**Severity Rankings**:
+
+| Ranking | Severity Description | Patient impact | Example | Medical intervention needed |
+| ------- | -------------------- | -------------- | ------- | --------------------------- |
+| 1 | Negligible | Patient didn't even notice | Wifi energy | No |
+| 2 | Minor | Patient is hurt, but they can fix it on their own | cut / scrape | No |
+| 3 | Serious | Patient is hurt, reversible damage | broken bone | Yes |
+| 4 | Critical | Patient is hurt, irreversible damage | sepsis infection that results in amputation | Yes |
+| 5 | Catastrophic | Patient dies | artery stent fails | N/A |
+
+---
+
+**Probability Rankings**: (these are pretty self-explanatory):
+  - 1: Improbable
+  - 2: Remote
+  - 3: Occasional
+  - 4: Probable
+  - 5: Frequent
+
+The overall risk is calculated as the product of severity and probability (Risk = Severity × Probability). Risks are categorized as:
+- **Low Risk**: < 5
+- **Moderate Risk**: 5–9
+- **High Risk**: ≥ 10
+
+---
+
+#### Risk Matrix Example
+
+Below is a 5x5 risk matrix illustrating the relationship between severity and probability:
+
+| Probability ↓ / Severity → | Negligible (1) | Minor (2) | Serious (3) | Critical (4) | Catastrophic (5) |
+|-----------------------------|----------------|-----------|--------------|--------------|------------------|
+| Improbable (1)             | 1 (Low)        | 2 (Low)   | 3 (Low)      | 4 (Low)      | 5 (Moderate)          |
+| Remote (2)                 | 2 (Low)        | 4 (Low)   | 6 (Moderate)      | 8 (Moderate)      | 10 (High)    |
+| Occasional (3)             | 3 (Low)        | 6 (Moderate)   | 9 (Moderate) | 12 (High)| 15 (High)        |
+| Probable (4)               | 4 (Low)        | 8 (Moderate)   | 12 (High)| 16 (High)    | 20 (High)        |
+| Frequent (5)               | 5 (Moderate)        | 10 (High)| 15 (High)  | 20 (High)    | 25 (High)        |
+
+
+#### Example Hazard Analysis
+
+Below is an example hazard analysis table for an insulin pump
+The hazard and severity keep their relationship. A given hazard always has the same severity. The thing that changes is the probability.
+- **Probability (initial)** describes *"if an accidental mistake in the hardware or code was made, and no mitigations were implemented, how often could this happen?"*
+- **Risk (initial)** is (initial probability) x (severity)
+- **Proability (mitigated)** describes *"if an accidental mistake in the hardware or code was made, and the mitigations were implemented, how often could this happen?"*
+- **Risk (mitigated)** is (mitigated probability) x (severity)
+
+| Hazard                  | Severity | Situation                          | Probability (Initial) | Risk (Initial) | Mitigation                  | Probability (Mitigated) | Risk (Mitigated) | Acceptability |
+|-------------------------|----------|------------------------------------|------------------------|----------------|-----------------------------|--------------------------|------------------|---------------|
+| Delay of treatment | 2 (Minor)       | Insulin dispersement mechanism breaks | 3 (Occasional)         | 6 (Moderate) | HZ:1 Device monitors dispersement mechanism to check for failures <br> HZ:2 Device reports to user to take device in for repair      | 2 (Remote)              | 4 (Low)         | Acceptable    |
+| Patient faints     | 3 (Serious)        | Bluetooth controls are hacked and attacker causes device to continue to disperse insulin.           | 3 (Occassional)           | 15 (High)      | HZ:3 Dispensor never allows more than a minimal dosage at a time <br> HZ:4 Dispensor hardware is designed to waits X seconds between dosages regardless of instructions from control software <br> HZ:5 Bluetooth discovery mode is disabled by default <br> HZ:6 Bluetooth implements strong password pairing <br> HZ:7 Mobile App paired with device requires a secure login | 2 (Remote)              | 6 (Moderate)         | Acceptable    |
+
+Notice how the mitigations reduce the probability and that that is what turns an unsafe device into a safe device.
+
+### Bringing it all together
+
+Each hazard mitigation ties directly to a system requirement, that flushes out the details of the hazard mitigation
+* SYS:1 The device shall require that the user logs in with secure username and password **[HZ:7]**
+* SYS:2 The device shall require that the username is an email **[HZ:7]**
+* SYS:3 The device shall require that the password meets complexity requirements **[HZ:7]**
+
+Did you notice the **[ HZ:7 ]** backtrace tied to the requirement? This shows to any FDA auditor, that SYS:1 implement hazard mitigation HZ:7.
+
+Remember our requirements above? We now tack on the tags that show what system design inputs they implement
+* RQ:1: Given the login view has loaded, then username and password textfields and a login button shall be displayed and no errors shall be displayed [SYS:1]
+* RQ:2: Given valid credentials are provided, when the login button is tapped, then the home screen shall display. [SYS:1]
+* RQ:3: Given an invalid email is provided, when the login button is tapped, then it shall display an error communicating that the email is invalid. [SYS:1] [SYS:2]
+
+Remember this table?
+
+**VER:1 Verification Protocool for the App**
+| Step # | Procedure | Expected Result | Observed Result or "As Expected" (A/E) | Pass / Fail |
+|------- | --------- | --------------- | -------------------------------------- | ----------- |
+| 1. | 1. Navigate to the Login screen. | Verify that username and password textfields and a login button are displayed and no errors are be displayed. [RQ:1] | A/E | Pass |
+| 2. | 1. Navigate to the Login screen.<br>2. Enter valid username and a password.<br>3. Tap the Login button. | Verify that the home screen displays [RQ:2] | A/E | Pass |
+
+## Traceability Matrix - Evidence that everything comes together
+
+| Hazard | System Requirement (Design Input) | Software Unit Requirement (Design Output) | Verification |
+| ------ | ------------ | ------------- | ------------ |
+| HZ:7 | SYS:1 | RQ:1 | VER:1 |
+| HZ:7 | SYS:1 | RQ:2 | VER:1 |
+| HZ:7 | SYS:1 | RQ:3 | VER:1 |
+| HZ:7 | SYS:2 | RQ:3 | VER:1 |
+
+This traceability matrix demonstrates how each hazard is linked to a system requirement, which are linked to software requirements, which are linked to verifications. Of course, the traceability matrix will show this relationship for all hazards (not just HZ:7). But you can then show any auditor that all hazards have mitigations, and since your verification protocol shows that all tests passed, you can confidently show any auditor that all your mitigations were confirmed to be implemented and that your device is safe.
