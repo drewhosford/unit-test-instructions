@@ -1,0 +1,17 @@
+# Requirements for create_fda_documentation.py
+# Python packages needed to run the FDA documentation generation script
+
+# YAML parsing for configuration files
+PyYAML>=6.0
+
+# Microsoft Word document manipulation
+python-docx>=0.8.11
+
+# Command line argument parsing (built into Python 3.2+)
+# argparse - included in standard library
+
+# Regular expressions (built into Python)
+# re - included in standard library
+
+# File system operations (built into Python)
+# os - included in standard library
