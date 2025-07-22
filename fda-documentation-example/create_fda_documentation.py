@@ -599,51 +599,16 @@ class CreateFDADocumentation:
         pass
 
 
-def parse_arguments():
-    # Optional command line arguments for backwards compatibility
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create FDA documentation')
     parser.add_argument('--config', '-c', type=str, default='config.yaml', 
                        help='Path to the configuration file (default: config.yaml)')
-    parser.add_argument('--golang', action='store_true', help='Create golang documentation (legacy)')
-    parser.add_argument('--swift', action='store_true', help='Create swift documentation (legacy)')
-    parser.add_argument('--python', action='store_true', help='Create python documentation (legacy)')
-    parser.add_argument('--all', action='store_true', help='Create all documentation (legacy)')
-    return parser.parse_args()
-
-
-if __name__ == "__main__":
-    args = parse_arguments()
+    args = parser.parse_args()
     # Create an instance of the CreateFDADocumentation class with the specified config file
     create_fda_documentation = CreateFDADocumentation(debug_print=False, config_file_path=args.config)
     
-    # Check if any legacy arguments were provided
-    if args.golang or args.swift or args.python or args.all:
-        print("Warning: Command line arguments are deprecated. The script now automatically processes all configured sections.")
-        print(f"Using configuration file: {args.config}")
-        if args.golang:
-            # Find first golang section in config
-            for section_name, section_config in create_fda_documentation.config.items():
-                if isinstance(section_config, dict) and section_config.get('language', '').lower() == 'golang':
-                    create_fda_documentation.create_documentation_from_tests(section_name, section_config)
-                    break
-        if args.swift:
-            # Find first swift section in config
-            for section_name, section_config in create_fda_documentation.config.items():
-                if isinstance(section_config, dict) and section_config.get('language', '').lower() == 'swift':
-                    create_fda_documentation.create_documentation_from_tests(section_name, section_config)
-                    break
-        if args.python:
-            # Find first python section in config
-            for section_name, section_config in create_fda_documentation.config.items():
-                if isinstance(section_config, dict) and section_config.get('language', '').lower() == 'python':
-                    create_fda_documentation.create_documentation_from_tests(section_name, section_config)
-                    break
-        if args.all:
-            create_fda_documentation.create_all_documentation()
-    else:
-        # New behavior: automatically process all sections from config
-        print(f"Processing all configured sections from {args.config}...")
-        create_fda_documentation.create_all_documentation()
+    print(f"Processing all configured sections from {args.config}...")
+    create_fda_documentation.create_all_documentation()
 
 
 
