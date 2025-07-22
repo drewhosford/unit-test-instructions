@@ -2,6 +2,7 @@ import os
 import re
 import yaml
 import argparse
+from copy import deepcopy
 from docx import Document
 from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -116,37 +117,69 @@ class TestGroup:
         self.requirements = []
 
 class CreateFDADocumentation:
-    def __init__(self, debug_print=False):
+    def __init__(self, debug_print=False, config_file_path='config.yaml'):
         self.debug_print = debug_print
+        self.config_file_path = config_file_path
         pass
     
     #using yaml config file for better readability and structure
     @property
     def config(self):
         if not hasattr(self, '_config'):
-            if not os.path.exists('config.yaml'):
-                print("Error: config.yaml file not found")
-                raise Exception('config.yaml file not found. Please create it and put in the same directory as this script.')
+            if not os.path.exists(self.config_file_path):
+                print(f"Error: {self.config_file_path} file not found")
+                raise Exception(f'{self.config_file_path} file not found. Please create it and put in the same directory as this script.')
             try:
-                with open('config.yaml', 'r') as file:
+                with open(self.config_file_path, 'r') as file:
                     self._config = yaml.safe_load(file)
             except Exception as e:
-                raise Exception(f"Error: config.yaml file could not be parsed. {e}")
+                raise Exception(f"Error: {self.config_file_path} file could not be parsed. {e}")
         return self._config
 
-    def get_test_files_with_extension(self, search_paths, extension):
-        if not isinstance(search_paths, list):
-            search_paths = [search_paths]
-        found_files = []
-        for this_path in search_paths:
-            for this_dir, _, files in os.walk(this_path):
-                for file_name in files:
-                    _, ext = os.path.splitext(file_name)
-                    if extension in ext:
-                        file_dir = os.path.join(this_path, this_dir)
-                        full_path = os.path.join(file_dir, file_name)
-                        found_files.append(full_path)
-        return found_files
+    def get_test_files_for_language(self, repo_path, language):
+        """Recursively searches repo_path for test files by detecting testing framework imports"""
+        lang_config = self.get_language_config(language)
+        test_file_ext = lang_config['test_file_ext']
+        test_import_patterns = lang_config['test_import_patterns']
+        
+        found_test_files = []
+        
+        # Walk through all directories in the repo
+        for root, dirs, files in os.walk(repo_path):
+            # Skip common non-source directories
+            dirs[:] = [d for d in dirs if d not in ['.git', 'node_modules', '__pycache__', '.venv', 'venv', 'build', 'dist', 'target']]
+            
+            for file_name in files:
+                # Check if file has the correct extension
+                if not file_name.endswith(test_file_ext):
+                    continue
+                
+                file_path = os.path.join(root, file_name)
+                
+                # Check if file contains testing framework imports
+                if self._is_test_file(file_path, test_import_patterns):
+                    found_test_files.append(file_path)
+        
+        return found_test_files
+    
+    def _is_test_file(self, file_path, test_import_patterns):
+        """Check if a file contains any of the testing framework import patterns"""
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+                # Read only the first 50 lines to check for imports (performance optimization)
+                lines_to_check = 50
+                for i, line in enumerate(file):
+                    if i >= lines_to_check:
+                        break
+                    
+                    # Check each test import pattern
+                    for pattern in test_import_patterns:
+                        if pattern.search(line):
+                            return True
+            return False
+        except (IOError, UnicodeDecodeError):
+            # If we can't read the file, assume it's not a test file
+            return False
     
     def parse_file_for_requirements(self, file_path, req_re, test_step_re, test_verification_re, requirement_group=1):
         requirements = []
@@ -174,7 +207,8 @@ class CreateFDADocumentation:
                 if tv_match:
                     if not curr_req:
                         print(f"  Error: Test verification found without a requirement {os.path.basename(file_path)}: {i} - '{line}'")
-                    curr_req.test_verifications.append(tv_match.group(1))
+                    else:
+                        curr_req.test_verifications.append(tv_match.group(1))
                     continue
         if curr_req:
             requirements.append(curr_req)
@@ -188,49 +222,110 @@ class CreateFDADocumentation:
                 'regex_requirement': re.compile(r'^func\s+Test_(.+)\(t\s+\*testing.T\)'),
                 'regex_test_step': re.compile(r'\s+//\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s+//\s*(V\d+:\s*.+)'),
-                'requirement_group': 1
+                'requirement_group': 1,
+                'test_import_patterns': [
+                    re.compile(r'^\s*import\s+"testing"'),
+                    re.compile(r'^\s*import\s+\(\s*.*"testing".*\)'),
+                    re.compile(r'^\s*"testing"')
+                ]
             },
             'swift': {
                 'test_file_ext': '.swift',
                 'regex_requirement': re.compile(r'\s+func\s+test_(.+)\(\).+\{'),
                 'regex_test_step': re.compile(r'\s+//\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s+//\s*(V\d+:\s*.+)'),
-                'requirement_group': 1
+                'requirement_group': 1,
+                'test_import_patterns': [
+                    re.compile(r'^\s*import\s+XCTest'),
+                    re.compile(r'^\s*@testable\s+import'),
+                    re.compile(r'class\s+\w+.*:\s*XCTestCase')
+                ]
             },
             'python': {
                 'test_file_ext': '.py',
                 'regex_requirement': re.compile(r'^\s*def\s+test_(.+)\('),
                 'regex_test_step': re.compile(r'\s*#\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s*#\s*(V\d+:\s*.+)'),
-                'requirement_group': 1
+                'requirement_group': 1,
+                'test_import_patterns': [
+                    re.compile(r'^\s*import\s+unittest'),
+                    re.compile(r'^\s*from\s+unittest'),
+                    re.compile(r'^\s*import\s+pytest'),
+                    re.compile(r'^\s*from\s+pytest'),
+                    re.compile(r'class\s+\w+.*\(.*unittest\.TestCase.*\)')
+                ]
             },
             'javascript': {
                 'test_file_ext': '.js',
                 'regex_requirement': re.compile(r'^\s*(it|test)\(\s*[\'"](.+?)[\'"]'),
                 'regex_test_step': re.compile(r'\s*//\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s*//\s*(V\d+:\s*.+)'),
-                'requirement_group': 2
+                'requirement_group': 2,
+                'test_import_patterns': [
+                    re.compile(r'^\s*(import|require).*[\'"]jest[\'"]'),
+                    re.compile(r'^\s*(import|require).*[\'"]mocha[\'"]'),
+                    re.compile(r'^\s*(import|require).*[\'"]chai[\'"]'),
+                    re.compile(r'^\s*describe\s*\('),
+                    re.compile(r'^\s*(it|test)\s*\(')
+                ]
             },
             'typescript': {
                 'test_file_ext': '.ts',
                 'regex_requirement': re.compile(r'^\s*(it|test)\(\s*[\'"](.+?)[\'"]'),
                 'regex_test_step': re.compile(r'\s*//\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s*//\s*(V\d+:\s*.+)'),
-                'requirement_group': 2
+                'requirement_group': 2,
+                'test_import_patterns': [
+                    re.compile(r'^\s*import.*[\'"]jest[\'"]'),
+                    re.compile(r'^\s*import.*[\'"]mocha[\'"]'),
+                    re.compile(r'^\s*import.*[\'"]chai[\'"]'),
+                    re.compile(r'^\s*describe\s*\('),
+                    re.compile(r'^\s*(it|test)\s*\(')
+                ]
             },
             'java': {
                 'test_file_ext': '.java',
-                'regex_requirement': re.compile(r'^\s*@Test\s*\n\s*public\s+void\s+test(.+?)\('),
+                'regex_requirement': re.compile(r'^\s*void\s+test_(.+?)\('),
                 'regex_test_step': re.compile(r'\s*//\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s*//\s*(V\d+:\s*.+)'),
-                'requirement_group': 1
+                'requirement_group': 1,
+                'test_import_patterns': [
+                    re.compile(r'^\s*import\s+org\.junit'),
+                    re.compile(r'^\s*import\s+org\.testng'),
+                    re.compile(r'^\s*@Test'),
+                    re.compile(r'^\s*@BeforeEach'),
+                    re.compile(r'^\s*@AfterEach')
+                ]
             },
             'csharp': {
                 'test_file_ext': '.cs',
                 'regex_requirement': re.compile(r'^\s*\[Test\]\s*\n\s*public\s+void\s+Test(.+?)\('),
                 'regex_test_step': re.compile(r'\s*//\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s*//\s*(V\d+:\s*.+)'),
-                'requirement_group': 1
+                'requirement_group': 1,
+                'test_import_patterns': [
+                    re.compile(r'^\s*using\s+NUnit\.Framework'),
+                    re.compile(r'^\s*using\s+Microsoft\.VisualStudio\.TestTools'),
+                    re.compile(r'^\s*using\s+Xunit'),
+                    re.compile(r'^\s*\[Test\]'),
+                    re.compile(r'^\s*\[TestMethod\]'),
+                    re.compile(r'^\s*\[Fact\]')
+                ]
+            },
+            'dart': {
+                'test_file_ext': '.dart',
+                'regex_requirement': re.compile(r'^\s*test\(\s*[\'"](.+?)[\'"]'),
+                'regex_test_step': re.compile(r'\s*//\s*(S\d+:\s*.+)'),
+                'regex_test_ver': re.compile(r'\s*//\s*(V\d+:\s*.+)'),
+                'requirement_group': 1,
+                'test_import_patterns': [
+                    re.compile(r'^\s*import\s+[\'"]package:test/test\.dart[\'"]'),
+                    re.compile(r'^\s*import\s+[\'"]package:flutter_test/flutter_test\.dart[\'"]'),
+                    re.compile(r'^\s*import\s+[\'"]package:mockito/mockito\.dart[\'"]'),
+                    re.compile(r'^\s*test\s*\('),
+                    re.compile(r'^\s*group\s*\('),
+                    re.compile(r'^\s*testWidgets\s*\(')
+                ]
             }
         }
         
@@ -240,7 +335,6 @@ class CreateFDADocumentation:
         return language_configs[language.lower()]
 
     def create_documentation_from_tests(self, section_name, section_config):
-        breakpoint()
         """Generic method to create documentation for any language based on section configuration"""
         language = section_config.get('language', '').lower()
         if not language:
@@ -269,23 +363,35 @@ class CreateFDADocumentation:
             for msg in error_msg:
                 print(f"  - {msg}")
             return
+            
         # Get language-specific configuration
         lang_config = self.get_language_config(language)
         
         # Get sections for this documentation type
         sections = self.get_sections_for_type(section_name)
         
-        # Get test paths
-        test_paths = [section_config.get('repo_test_path', '')]
+        # Get repository path to search for test files
+        repo_path = section_config.get('repo_path', '')
+        if not repo_path:
+            error_msg.append(f"No repo_path specified for section '{section_name}'. Repository path is required in config.")
+            print("Skipping section due to missing configurations:")
+            for msg in error_msg:
+                print(f"  - {msg}")
+            return
+            
+        # Find test files by searching the repository for files with testing imports
+        test_files = self.get_test_files_for_language(repo_path, language)
+        
+        if not test_files:
+            print(f"  Warning: No test files found for {language} in {repo_path}")
+            return
+            
+        print(f"  Found {len(test_files)} test files for {language}")
         
         # Create documentation using the generic method
         self.create_documentation(
-            test_file_paths=test_paths,
-            test_file_ext=lang_config['test_file_ext'],
-            regex_requirement=lang_config['regex_requirement'],
-            regex_test_step=lang_config['regex_test_step'],
-            regex_test_ver=lang_config['regex_test_ver'],
-            requirement_group=lang_config['requirement_group'],
+            test_files=test_files,
+            lang_config=lang_config,
             sections=sections,
             tag=tag,
             template_req_doc_path=section_config.get('req_template_path'),
@@ -312,13 +418,19 @@ class CreateFDADocumentation:
                 print(f"Warning: No language specified for section '{section_name}'. Skipping.")
         pass
 
-    def create_documentation(self, test_file_paths, test_file_ext, regex_requirement, regex_test_step, regex_test_ver, sections, tag, template_req_doc_path, template_ver_doc_path, output_req_doc_path, output_ver_doc_path, requirement_group=1):
-        # get all test files
-        test_files = self.get_test_files_with_extension(test_file_paths, test_file_ext)
+    def create_documentation(self, test_files, lang_config, sections, tag, template_req_doc_path, template_ver_doc_path, output_req_doc_path, output_ver_doc_path):
+        # Parse requirements from all test files
         requirements = []
-        # for each test file, parse it for requirements and add them to the requirements list
+        breakpoint()
         for test_file in test_files:
-            new_reqs = self.parse_file_for_requirements(test_file, regex_requirement, regex_test_step, regex_test_ver, requirement_group)
+            print(f"Processing test file: {os.path.basename(test_file)}", end='\r')
+            new_reqs = self.parse_file_for_requirements(
+                test_file, 
+                lang_config['regex_requirement'], 
+                lang_config['regex_test_step'], 
+                lang_config['regex_test_ver'], 
+                lang_config['requirement_group']
+            )
             requirements += new_reqs        
                 
         for req in requirements:
@@ -350,7 +462,7 @@ class CreateFDADocumentation:
         for section_dict in sections_list:
             section = Section()
             section.name = section_dict.get('display_name', '')
-            section.filenames = [section_dict.get('filename', '')]
+            section.filenames = section_dict.get('filenames', [])
             sections.append(section)
             
         # Add ignore section if it exists
@@ -403,8 +515,8 @@ class CreateFDADocumentation:
                 continue
             document.add_heading(section.name, level=1)
             for req in section.requirements:
-                req.req_num = req_num
                 req_num += 1
+                req.req_num = req_num
                 p = document.add_paragraph()
                 p.style = style2
                 run1 = p.add_run(f"[{tag}:DO:{req_num}]")
@@ -414,21 +526,34 @@ class CreateFDADocumentation:
                     p.italic = True
                 run1.style = tag_style
                 run1.bold = True
+        
+        # Create Outputs directory if it doesn't exist
         dirname = os.path.dirname(docx_path)
-        filename = os.path.join(dirname, output_docx_name)
+        outputs_dir = os.path.join(dirname, 'Outputs')
+        if not os.path.exists(outputs_dir):
+            os.makedirs(outputs_dir)
+            print(f"Created Outputs directory: {outputs_dir}")
+        
+        filename = os.path.join(outputs_dir, output_docx_name)
         document.save(filename)
+        print(f"Saved requirements document: {filename}")
         pass
 
     def create_verification_document(self, sections, tag, docx_path, output_docx_name):
+        breakpoint()
         document = Document(docx_path)
-        # Get the paragraph with the text "Test Steps"
-        verstep_style = document.styles['VerificationTestStep']
+        # Get the paragraph with the text "Test Steps", if the style does not exist, create it
+        test_step_num_style = document.styles['List Paragraph']
         tag_style = self.get_tag_style(document)
         p = document.add_paragraph()
         p.style = document.styles['Heading 1']
         p.add_run("Verification Test Protocol")
         ver_num = 1
-        for section in sections:
+        # get the last table
+        table = document.tables[-1]
+        # make a deep copy of the table
+        copied_table = deepcopy(table._tbl)
+        for table_i, section in enumerate(sections):
             if section.name == 'Ignore':
                 continue
             if len(section.requirements) == 0:
@@ -439,23 +564,16 @@ class CreateFDADocumentation:
             run.style = tag_style
             run.bold = True
             p.add_run(section.name)
-            table = document.add_table(rows=1, cols=5)
-            table.allow_autofit = False
-            table.columns[0].width = Pt(20)
-            table.columns[1].width = Pt(100)
-            table.columns[2].width = Pt(100)
-            table.columns[3].width = Pt(30)
-            table.columns[4].width = Pt(30)
-            row = table.rows[0].cells
-            row[0].text = '#'
-            row[1].text = 'Test Steps'
-            row[2].text = 'Test Verifications'
-            row[3].text = 'Observed Results'
-            row[4].text = 'Pass/Fail'
-            for req in section.requirements:
-                row = table.add_row().cells
-                row[0].text = " "
-                row[0].paragraphs[0].style = verstep_style
+            if table_i > 0:
+                last_paragraph = document.add_paragraph()
+                last_paragraph._p.addnext(copied_table._tbl)
+            # add as many rows to the table as there are requirements in the section
+            for i in range(len(section.requirements)):
+                table.add_row()        
+            for i, req in enumerate(section.requirements):
+                row = table.rows[i + 1].cells
+                row[0].text = ""
+                row[0].paragraphs[0].style = test_step_num_style
                 row[1].text = '\n'.join(req.test_steps)
                 row[2].text = '\n'.join(req.test_verifications)
                 p = row[2].add_paragraph()
@@ -467,15 +585,25 @@ class CreateFDADocumentation:
                     p.text = f"({os.path.basename(req.test_file_path)}:{req.test_file_line})"
                     p.italic = True
             ver_num += 1
+        
+        # Create Outputs directory if it doesn't exist
         dirname = os.path.dirname(docx_path)
-        filename = os.path.join(dirname, output_docx_name)
+        outputs_dir = os.path.join(dirname, 'Outputs')
+        if not os.path.exists(outputs_dir):
+            os.makedirs(outputs_dir)
+            print(f"Created Outputs directory: {outputs_dir}")
+        
+        filename = os.path.join(outputs_dir, output_docx_name + '.docx')
         document.save(filename)
+        print(f"Saved verification document: {filename}")
         pass
 
 
 def parse_arguments():
     # Optional command line arguments for backwards compatibility
     parser = argparse.ArgumentParser(description='Create FDA documentation')
+    parser.add_argument('--config', '-c', type=str, default='config.yaml', 
+                       help='Path to the configuration file (default: config.yaml)')
     parser.add_argument('--golang', action='store_true', help='Create golang documentation (legacy)')
     parser.add_argument('--swift', action='store_true', help='Create swift documentation (legacy)')
     parser.add_argument('--python', action='store_true', help='Create python documentation (legacy)')
@@ -485,12 +613,13 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    # Create an instance of the CreateFDADocumentation class
-    create_fda_documentation = CreateFDADocumentation(debug_print=False)
+    # Create an instance of the CreateFDADocumentation class with the specified config file
+    create_fda_documentation = CreateFDADocumentation(debug_print=False, config_file_path=args.config)
     
     # Check if any legacy arguments were provided
     if args.golang or args.swift or args.python or args.all:
         print("Warning: Command line arguments are deprecated. The script now automatically processes all configured sections.")
+        print(f"Using configuration file: {args.config}")
         if args.golang:
             # Find first golang section in config
             for section_name, section_config in create_fda_documentation.config.items():
@@ -513,7 +642,7 @@ if __name__ == "__main__":
             create_fda_documentation.create_all_documentation()
     else:
         # New behavior: automatically process all sections from config
-        print("Processing all configured sections from config.yaml...")
+        print(f"Processing all configured sections from {args.config}...")
         create_fda_documentation.create_all_documentation()
 
 
