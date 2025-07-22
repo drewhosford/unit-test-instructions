@@ -421,7 +421,6 @@ class CreateFDADocumentation:
     def create_documentation(self, test_files, lang_config, sections, tag, template_req_doc_path, template_ver_doc_path, output_req_doc_path, output_ver_doc_path):
         # Parse requirements from all test files
         requirements = []
-        breakpoint()
         for test_file in test_files:
             print(f"Processing test file: {os.path.basename(test_file)}", end='\r')
             new_reqs = self.parse_file_for_requirements(
@@ -540,7 +539,6 @@ class CreateFDADocumentation:
         pass
 
     def create_verification_document(self, sections, tag, docx_path, output_docx_name):
-        breakpoint()
         document = Document(docx_path)
         # Get the paragraph with the text "Test Steps", if the style does not exist, create it
         test_step_num_style = document.styles['List Paragraph']
@@ -553,20 +551,41 @@ class CreateFDADocumentation:
         table = document.tables[-1]
         # make a deep copy of the table
         copied_table = deepcopy(table._tbl)
+        
+        # Find the paragraph just before the last table for the first section
+        first_section_paragraph = None
+        for element in document.element.body:
+            if element.tag.endswith('tbl') and element == table._tbl:
+                # Found the table, get the previous element
+                prev_element = element.getprevious()
+                if prev_element is not None and prev_element.tag.endswith('p'):
+                    # Find the corresponding paragraph object
+                    for para in document.paragraphs:
+                        if para._element == prev_element:
+                            first_section_paragraph = para
+                            break
+                break
+        
         for table_i, section in enumerate(sections):
             if section.name == 'Ignore':
                 continue
             if len(section.requirements) == 0:
                 continue
-            p = document.add_paragraph()
+            
+            if table_i == 0 and first_section_paragraph is not None:
+                # Use the existing paragraph before the table for the first section
+                p = first_section_paragraph
+                # Clear existing content and add new content
+                p.clear()
+            else:
+                p = document.add_paragraph()
             p.style = document.styles['Heading 2']
-            run = p.add_run(f"[{tag}:VER:{ver_num}] ")
+            run = p.add_run(f"{tag}:VER:{ver_num} ")
             run.style = tag_style
             run.bold = True
             p.add_run(section.name)
             if table_i > 0:
-                last_paragraph = document.add_paragraph()
-                last_paragraph._p.addnext(copied_table._tbl)
+                p._p.addnext(copied_table)
             # add as many rows to the table as there are requirements in the section
             for i in range(len(section.requirements)):
                 table.add_row()        
