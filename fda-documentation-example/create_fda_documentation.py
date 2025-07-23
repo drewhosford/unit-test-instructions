@@ -203,6 +203,24 @@ class CreateFDADocumentation:
                     curr_req.test_file_line = i + 1
                     curr_req.req_orig_text = req_match.group(requirement_group)
                     continue
+                
+                # Special handling for blocTest pattern where description might be on next line
+                if 'blocTest<' in line and not req_match:
+                    # Look for description in next few lines
+                    for j in range(1, 4):  # Check next 3 lines
+                        if i + j < len(lines):
+                            next_line = lines[i + j]
+                            desc_match = re.match(r'^\s*[\'"](.+?)[\'"],?\s*$', next_line)
+                            if desc_match:
+                                if curr_req:
+                                    requirements.append(curr_req)
+                                curr_req = Requirement()
+                                curr_req.test_file_path = file_path
+                                curr_req.test_file_line = i + 1
+                                curr_req.req_orig_text = desc_match.group(1)
+                                break
+                    continue
+                
                 ts_match = test_step_re.match(line)
                 if ts_match:
                     if not curr_req:
