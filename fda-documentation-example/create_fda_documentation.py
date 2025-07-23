@@ -602,12 +602,13 @@ class CreateFDADocumentation:
     def create_verification_document(self, sections, tag, docx_path, output_docx_name):
         document = Document(docx_path)
         # Get the paragraph with the text "Test Steps", if the style does not exist, create it
-        test_step_num_style = document.styles['List Paragraph']
+        test_step_num_style = document.styles['Normal']
         tag_style = self.get_tag_style(document)
         p = document.add_paragraph()
         p.style = document.styles['Heading 1']
         p.add_run("Verification Test Protocol")
         ver_num = 1
+        ver_step_num = 1
         # get the last table
         table = document.tables[-1]
         # make a deep copy of the table
@@ -656,7 +657,8 @@ class CreateFDADocumentation:
                 table.add_row()
             for i, req in enumerate(section.requirements):
                 cells = table.rows[i + 1].cells
-                cells[0].text = ""
+                cells[0].text = f"{ver_step_num}."
+                ver_step_num += 1
                 cells[0].paragraphs[0].style = test_step_num_style
                 cells[1].text = '\n'.join(req.test_steps)
                 cells[2].text = '\n'.join(req.test_verifications)
