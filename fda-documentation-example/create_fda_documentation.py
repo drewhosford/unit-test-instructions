@@ -528,7 +528,7 @@ class CreateFDADocumentation:
                 req.req_num = req_num
                 p = document.add_paragraph()
                 p.style = style2
-                run1 = p.add_run(f"[{tag}:DO:{req_num}]")
+                run1 = p.add_run(f"{tag}:DO:{req_num}")
                 p.add_run(f" {req.req_text}")
                 if self.debug_print:
                     p = p.add_run(f" ({os.path.basename(req.test_file_path)}:{req.test_file_line})")
