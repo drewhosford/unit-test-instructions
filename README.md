@@ -1,7 +1,12 @@
-# Writing Unit Tests for Medical Devices: A Regulated Approach
+# Medical Device Testing Instructions
+
+This repository contains guidance and examples for writing unit tests for medical devices that comply with FDA regulations.
 
 ## Table of Contents
-- [Background](#background)
+
+- [Quick Start](#quick-start)
+- [Examples by Language](#examples-by-language)
+- [Background: Writing Unit Tests for Medical Devices](#background-writing-unit-tests-for-medical-devices)
   - [Legal evidence that your software works](#legal-evidence-that-your-software-works)
 - [The Traditional Approach: Manual Testing](#the-traditional-approach-manual-testing)
   - [When Manual Testing Falls Short](#when-manual-testing-falls-short)
@@ -9,25 +14,42 @@
 - [The Unit Testing Revolution](#the-unit-testing-revolution)
 - [A Modern Process for Unit Testing in Regulated Environments](#a-modern-process-for-unit-testing-in-regulated-environments)
   - [Rules on FDA requirement writing](#rules-on-fda-requirement-writing)
-  - [Software specific guidelines - Gherkin syntax](#software-specific-guidelines---gherkin-syntax)
   - [Examples of how to write unit tests in a regulated environment](#examples-of-how-to-write-unit-tests-in-a-regulated-environment)
   - [Writing unit tests that can be turned into written requirements](#writing-unit-tests-that-can-be-turned-into-written-requirements)
 - [The Verification Protocol](#the-verification-protocol)
   - [Example Verification Protocol](#example-verification-protocol)
-  - [Mobile App - Swift Example](#mobile-app-example-in-swift)
-  - [Backend - Golang Example](#backend-example-in-golang)
+  - [Mobile App Example in Swift](#mobile-app-example-in-swift)
+  - [Backend Example in Golang](#backend-example-in-golang)
 - [Quick Start Guide](#quick-start-guide)
-  - [Writing Your First Medical Device Unit Test](#writing-your-first-medical-device-unit-test)
-  - [Common Pitfalls to Avoid](#common-pitfalls-to-avoid)
-  - [Advanced Topics](#advanced-topics)
-    - [Test Data Management](#test-data-management)
-    - [Continuous Integration](#continuous-integration)
+  - [1. Using the FDA Documentation Generator](#1-using-the-fda-documentation-generator)
+  - [2. Writing Your First Medical Device Unit Test](#2-writing-your-first-medical-device-unit-test)
+  - [3. Common Pitfalls to Avoid](#3-common-pitfalls-to-avoid)
 - [Guidelines for Writing Verification Statements](#guidelines-for-writing-verification-statements)
   - [Implementation Tips](#implementation-tips)
 - [Conclusion](#conclusion)
 - [TL;DR](#tldr)
+- [Advanced Topics](#advanced-topics)
+  - [Showing Your Software is Safe](#showing-your-software-is-safe)
+  - [Software Safety Hazard Analysis](#software-safety-hazard-analysis)
+  - [Risk Acceptability using a Hazard Analysis](#risk-acceptability-using-a-hazard-analysis)
+  - [Linking Requirements to Software Specifications](#linking-requirements-to-software-specifications)
+  - [Example Verification Protocol](#example-verification-protocol-1)
+  - [Traceability Matrix – Evidence That Everything Connects](#traceability-matrix--evidence-that-everything-connects)
 
-## Background
+## Quick Start
+
+This repository provides comprehensive examples and tools for medical device software testing:
+
+- **[FDA Documentation Generator](fda-documentation-example/)** - Automated tool for generating FDA-compliant documentation from unit tests
+- **Programming Language Examples** - Sample test implementations in Go, Swift, and more
+- **Medical Device Testing Guidelines** - Best practices for safety-critical software testing
+
+## Examples by Language
+
+- **[Golang Example](golang-example/)** - API testing with SQLite backend
+- **[Swift Example](swift-example/)** - iOS app testing with XCTest framework
+
+## Background: Writing Unit Tests for Medical Devices
 
 Writing software for **medical devices** is unlike writing software for any other industry. In typical consumer or enterprise applications, a bug might mean an inconvenience or some lost data. In medical software, a bug — what the FDA often refers to as a **latent design flaw** — can result in **injury or death**.
 
@@ -433,7 +455,34 @@ By now, you have probably noticed two things:
 
 ## Quick Start Guide
 
-### Writing Your First Medical Device Unit Test
+### 1. Using the FDA Documentation Generator
+
+The fastest way to get started is with our automated documentation generator:
+
+```bash
+# Navigate to the FDA documentation tool
+cd fda-documentation-example
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure your project (create config.yaml)
+cp config.yaml.example config.yaml
+# Edit config.yaml with your project paths and settings
+
+# Generate FDA documentation
+python create_fda_documentation.py
+```
+
+**What this does:**
+- 🔍 Automatically discovers test files in your repositories
+- 📝 Generates FDA-compliant Requirements Specification documents
+- ✅ Creates Verification Protocol documents with test steps
+- 📊 Supports 8 programming languages (Go, Swift, Python, JS, TS, Java, C#, Dart)
+
+For complete setup instructions, see the **[FDA Documentation Generator Guide](fda-documentation-example/CREATE-DOCUMENTATION-README.md)**.
+
+### 2. Writing Your First Medical Device Unit Test
 
 Follow this template for clear, traceable tests:
 
@@ -445,7 +494,7 @@ func test_GivenTheLoginViewHasLoaded_ThenAllRequiredElementsShallBePresent() {
 }
 ```
 
-### Common Pitfalls to Avoid
+### 3. Common Pitfalls to Avoid
 
 ❌ **Don't**: Write vague test names
 ```swift
