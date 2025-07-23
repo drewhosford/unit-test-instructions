@@ -3,6 +3,8 @@
 go.sum
 *.docx
 *.txt
+*.yaml
+!config.yaml
 
 # Swift
 *.xcodeproj/xcuserdata/
