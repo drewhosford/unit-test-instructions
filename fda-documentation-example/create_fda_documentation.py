@@ -109,6 +109,7 @@ class Section:
         self.name = ''
         self.filenames = []
         self.requirements = []
+        self.path_key = ''
 
 class TestGroup:
     def __init__(self):
@@ -334,30 +335,30 @@ class CreateFDADocumentation:
         
         return language_configs[language.lower()]
 
-    def create_documentation_from_tests(self, section_name, section_config):
+    def create_documentation_from_tests(self, repo_name, repo_config):
         """Generic method to create documentation for any language based on section configuration"""
-        language = section_config.get('language', '').lower()
+        language = repo_config.get('language', '').lower()
         if not language:
-            raise Exception(f"No language specified for section '{section_name}'")
-        
+            raise Exception(f"No language specified for repo '{repo_name}'")
+
         # Check for required tag field
-        tag = section_config.get('tag')
-        req_template_path = section_config.get('req_template_path', '')
-        ver_template_path = section_config.get('ver_template_path', '')
-        req_output_name = section_config.get('req_output_name', '')
-        ver_output_name = section_config.get('ver_output_name', '')
+        tag = repo_config.get('tag')
+        req_template_path = repo_config.get('req_template_path', '')
+        ver_template_path = repo_config.get('ver_template_path', '')
+        req_output_name = repo_config.get('req_output_name', '')
+        ver_output_name = repo_config.get('ver_output_name', '')
         # if any of the required fields are missing, raise an exception. Allow output of all missing fields
         error_msg = []
         if not tag:
-            error_msg.append(f"No tag specified for section '{section_name}'. Tag is required in config.")
+            error_msg.append(f"No tag specified for repo '{repo_name}'. Tag is required in config.")
         if not req_template_path:
-            error_msg.append(f"No req_template_path specified for section '{section_name}'. Template is required in config.")
+            error_msg.append(f"No req_template_path specified for repo '{repo_name}'. Template is required in config.")
         if not ver_template_path:
-            error_msg.append(f"No ver_template_path specified for section '{section_name}'. Template is required in config.")
+            error_msg.append(f"No ver_template_path specified for repo '{repo_name}'. Template is required in config.")
         if not req_output_name:
-            error_msg.append(f"No req_output_name specified for section '{section_name}'. Output name is required in config.")
+            error_msg.append(f"No req_output_name specified for repo '{repo_name}'. Output name is required in config.")
         if not ver_output_name:
-            error_msg.append(f"No ver_output_name specified for section '{section_name}'. Output name is required in config.")
+            error_msg.append(f"No ver_output_name specified for repo '{repo_name}'. Output name is required in config.")
         if len(error_msg) > 0:
             print("Skipping section due to missing configurations:")
             for msg in error_msg:
@@ -368,12 +369,12 @@ class CreateFDADocumentation:
         lang_config = self.get_language_config(language)
         
         # Get sections for this documentation type
-        sections = self.get_sections_for_type(section_name)
-        
+        sections = self.get_sections_for_repo(repo_name)
+
         # Get repository path to search for test files
-        repo_path = section_config.get('repo_path', '')
+        repo_path = repo_config.get('repo_path', '')
         if not repo_path:
-            error_msg.append(f"No repo_path specified for section '{section_name}'. Repository path is required in config.")
+            error_msg.append(f"No repo_path specified for repo '{repo_name}'. Repository path is required in config.")
             print("Skipping section due to missing configurations:")
             for msg in error_msg:
                 print(f"  - {msg}")
@@ -394,32 +395,33 @@ class CreateFDADocumentation:
             lang_config=lang_config,
             sections=sections,
             tag=tag,
-            template_req_doc_path=section_config.get('req_template_path'),
-            template_ver_doc_path=section_config.get('ver_template_path'),
-            output_req_doc_path=section_config.get('req_output_name'),
-            output_ver_doc_path=section_config.get('ver_output_name')
+            template_req_doc_path=repo_config.get('req_template_path'),
+            template_ver_doc_path=repo_config.get('ver_template_path'),
+            output_req_doc_path=repo_config.get('req_output_name'),
+            output_ver_doc_path=repo_config.get('ver_output_name')
         )
     
     def create_all_documentation(self):
         """Automatically create documentation for all configured sections"""
-        for section_name, section_config in self.config.items():
-            if not isinstance(section_config, dict):
+        for repo_name, repo_config in self.config.items():
+            if not isinstance(repo_config, dict):
                 continue
             
-            language = section_config.get('language', '').lower()
+            language = repo_config.get('language', '').lower()
             
             if language:
                 try:
-                    print(f"Creating {language.capitalize()} documentation for section: {section_name}")
-                    self.create_documentation_from_tests(section_name, section_config)
+                    print(f"Creating {language.capitalize()} documentation for section: {repo_name}")
+                    self.create_documentation_from_tests(repo_name, repo_config)
                 except Exception as e:
-                    print(f"Error creating documentation for section '{section_name}': {e}")
+                    print(f"Error creating documentation for section '{repo_name}': {e}")
             else:
-                print(f"Warning: No language specified for section '{section_name}'. Skipping.")
+                print(f"Warning: No language specified for section '{repo_name}'. Skipping.")
         pass
 
     def create_documentation(self, test_files, lang_config, sections, tag, template_req_doc_path, template_ver_doc_path, output_req_doc_path, output_ver_doc_path):
         # Parse requirements from all test files
+        breakpoint()
         requirements = []
         for test_file in test_files:
             print(f"Processing test file: {os.path.basename(test_file)}", end='\r')
@@ -430,7 +432,12 @@ class CreateFDADocumentation:
                 lang_config['regex_test_ver'], 
                 lang_config['requirement_group']
             )
-            requirements += new_reqs        
+            requirements += new_reqs
+        print(f"Found {len(requirements)} requirements from {len(test_files)} test files.")
+        # Save the test files to a file called test_files.txt
+        with open(f'test_files-{tag}.txt', 'w') as f:
+            for test_file in test_files:
+                f.write(f"{test_file}\n")
                 
         for req in requirements:
             section = self.get_section_for_requirement(req, sections)
@@ -450,22 +457,23 @@ class CreateFDADocumentation:
         self.create_requirements_document(sections, tag, template_req_doc_path, output_req_doc_path)
         self.create_verification_document(sections, tag, template_ver_doc_path, output_ver_doc_path)
 
-    def get_sections_for_type(self, documentation_type):
-        config_section = self.config.get(documentation_type)    
-        if not config_section:
-            raise Exception(f"Error: config.yaml file does not contain a section for '{documentation_type}'")
+    def get_sections_for_repo(self, repo_name):
+        config_repo = self.config.get(repo_name)    
+        if not config_repo:
+            raise Exception(f"Error: config.yaml file does not contain a section for '{repo_name}'")
         
-        sections_list = config_section.get('sections', [])
+        sections_list = config_repo.get('sections', [])
         sections = []
         
         for section_dict in sections_list:
             section = Section()
             section.name = section_dict.get('display_name', '')
             section.filenames = section_dict.get('filenames', [])
+            section.path_key = section_dict.get('path_key', '')
             sections.append(section)
             
         # Add ignore section if it exists
-        ignore_list = config_section.get('ignore', [])
+        ignore_list = config_repo.get('ignore', [])
         if ignore_list:
             ignore_section = Section()
             ignore_section.name = "Ignore"
@@ -481,6 +489,8 @@ class CreateFDADocumentation:
     def get_section_for_requirement(self, req, sections):
         misc_section = None
         for section in sections:
+            if section.path_key != '' and section.path_key not in req.test_file_path:
+                continue
             if req.test_filename in section.filenames:
                 return section
             if section.name == 'Miscellaneous':
