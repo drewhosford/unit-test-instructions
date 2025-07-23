@@ -485,11 +485,6 @@ class CreateFDADocumentation:
             )
             requirements += new_reqs
         print(f"Found {len(requirements)} requirements from {len(test_files)} test files.")
-        # Save the test files to a file called test_files.txt
-        with open(f'test_files-{tag}.txt', 'w') as f:
-            for test_file in test_files:
-                f.write(f"{test_file}\n")
-                
         for req in requirements:
             section = self.get_section_for_requirement(req, sections)
             section.requirements.append(req)
