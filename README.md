@@ -1,12 +1,8 @@
-# Medical Device Testing Instructions
-
-This repository contains guidance and examples for writing unit tests for medical devices that comply with FDA regulations.
+# Writing Unit Tests for Medical Devices: A Regulated Approach
 
 ## Table of Contents
 
-- [Quick Start](#quick-start)
-- [Examples by Language](#examples-by-language)
-- [Background: Writing Unit Tests for Medical Devices](#background-writing-unit-tests-for-medical-devices)
+- [Background](#background)
   - [Legal evidence that your software works](#legal-evidence-that-your-software-works)
 - [The Traditional Approach: Manual Testing](#the-traditional-approach-manual-testing)
   - [When Manual Testing Falls Short](#when-manual-testing-falls-short)
@@ -36,20 +32,7 @@ This repository contains guidance and examples for writing unit tests for medica
   - [Example Verification Protocol](#example-verification-protocol-1)
   - [Traceability Matrix – Evidence That Everything Connects](#traceability-matrix--evidence-that-everything-connects)
 
-## Quick Start
-
-This repository provides comprehensive examples and tools for medical device software testing:
-
-- **[FDA Documentation Generator](fda-documentation-example/)** - Automated tool for generating FDA-compliant documentation from unit tests
-- **Programming Language Examples** - Sample test implementations in Go, Swift, and more
-- **Medical Device Testing Guidelines** - Best practices for safety-critical software testing
-
-## Examples by Language
-
-- **[Golang Example](golang-example/)** - API testing with SQLite backend
-- **[Swift Example](swift-example/)** - iOS app testing with XCTest framework
-
-## Background: Writing Unit Tests for Medical Devices
+## Background
 
 Writing software for **medical devices** is unlike writing software for any other industry. In typical consumer or enterprise applications, a bug might mean an inconvenience or some lost data. In medical software, a bug — what the FDA often refers to as a **latent design flaw** — can result in **injury or death**.
 
@@ -450,10 +433,18 @@ By now, you have probably noticed two things:
 2. There isn't a test of a GET to `v1/users` with a populated table. Grouping similar tests together like this helps identify testing gaps.
 
 
-## Showing that your software is safe
-
-
 ## Quick Start Guide
+
+This repository provides comprehensive examples and tools for medical device software testing:
+
+- **[FDA Documentation Generator](fda-documentation-example/)** - Automated tool for generating FDA-compliant documentation from unit tests
+- **Programming Language Examples** - Sample test implementations in Go, Swift, and more
+- **Medical Device Testing Guidelines** - Best practices for safety-critical software testing
+
+## Examples by Language
+
+- **[Golang Example](golang-example/)** - API testing with SQLite backend
+- **[Swift Example](swift-example/)** - iOS app testing with XCTest framework
 
 ### 1. Using the FDA Documentation Generator
 
