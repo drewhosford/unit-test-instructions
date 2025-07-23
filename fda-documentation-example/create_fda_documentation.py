@@ -593,9 +593,8 @@ class CreateFDADocumentation:
         # get the last table
         table = document.tables[-1]
         # make a deep copy of the table
-        copied_table = deepcopy(table._tbl)
-        
-        # Find the paragraph just before the last table for the first section
+        copied_table_tbl = deepcopy(table._tbl)
+        # Find the paragraph just before the last table
         first_section_paragraph = None
         for element in document.element.body:
             if element.tag.endswith('tbl') and element == table._tbl:
@@ -613,6 +612,7 @@ class CreateFDADocumentation:
             if section.name == 'Ignore':
                 continue
             if len(section.requirements) == 0:
+                print(f"  Warning: No requirements in section '{section.name}' for tag '{tag}'. Skipping section.")
                 continue
             
             if table_i == 0 and first_section_paragraph is not None:
@@ -628,22 +628,26 @@ class CreateFDADocumentation:
             run.bold = True
             p.add_run(section.name)
             if table_i > 0:
-                p._p.addnext(copied_table)
-            # add as many rows to the table as there are requirements in the section
-            for i in range(len(section.requirements)):
-                table.add_row()        
+                # Create a new table from the copied XML element and insert it
+                new_table_tbl = deepcopy(copied_table_tbl)
+                p._p.addnext(new_table_tbl)
+                # Get the newly added table from the document's tables collection
+                table = document.tables[-1]  # The newly added table will be the last one
+            # ensure that the table has sufficient rows for all the requirements (keeping in mind that the copied table already has a header row and an empty first row)
+            for i in range(len(section.requirements) - 1):
+                table.add_row()
             for i, req in enumerate(section.requirements):
-                row = table.rows[i + 1].cells
-                row[0].text = ""
-                row[0].paragraphs[0].style = test_step_num_style
-                row[1].text = '\n'.join(req.test_steps)
-                row[2].text = '\n'.join(req.test_verifications)
-                p = row[2].add_paragraph()
+                cells = table.rows[i + 1].cells
+                cells[0].text = ""
+                cells[0].paragraphs[0].style = test_step_num_style
+                cells[1].text = '\n'.join(req.test_steps)
+                cells[2].text = '\n'.join(req.test_verifications)
+                p = cells[2].add_paragraph()
                 run = p.add_run(f"[{tag}:DO:{req.req_num}]")
                 run.style = tag_style
                 run.bold = True
                 if self.debug_print:
-                    p = row[2].add_paragraph()
+                    p = cells[2].add_paragraph()
                     p.text = f"({os.path.basename(req.test_file_path)}:{req.test_file_line})"
                     p.italic = True
             ver_num += 1
@@ -655,7 +659,7 @@ class CreateFDADocumentation:
             os.makedirs(outputs_dir)
             print(f"Created Outputs directory: {outputs_dir}")
         
-        filename = os.path.join(outputs_dir, output_docx_name + '.docx')
+        filename = os.path.join(outputs_dir, output_docx_name)
         document.save(filename)
         print(f"Saved verification document: {filename}")
         pass
