@@ -1,25 +1,25 @@
 backend:
   repo_path: ../golang-example
-  repo_test_path: ../golang-example/tests
   req_template_path: Templates/Software Requirements Specification - Backend.docx
-  req_output_name: "Software Requirements Specification - Backend"
+  req_output_name: "Software Requirements Specification - Backend.docx"
   ver_template_path: Templates/Verification Protocol - Backend.docx
-  ver_output_name: "Verification Protocol - Backend"
+  ver_output_name: "Verification Protocol - Backend.docx"
   tag: API
   language: golang
   sections:
     - display_name: "Users Endpoint"
-      filename: "golang_example_test.go"
+      filenames:
+        - "golang_example_test.go"
   ignore:
 mobile:
   repo_path: ../swift-example
-  repo_test_path: ../swift-example/Tests
   req_template_path: Templates/Software Requirements Specification - iOS App.docx
-  req_output_name: "Software Requirements Specification - iOS App"
+  req_output_name: "Software Requirements Specification - iOS App.docx"
   ver_template_path: Templates/Verification Protocol - iOS App.docx
-  ver_output_name: "Verification Protocol - iOS App"
+  ver_output_name: "Verification Protocol - iOS App.docx"
   tag: IOS
   language: swift
   sections:
     - display_name: "Login Screen"
-      filename: "LoginViewTests.swift"
+      filenames:
+        - "LoginViewTests.swift"
