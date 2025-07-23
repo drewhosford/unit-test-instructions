@@ -182,13 +182,19 @@ class CreateFDADocumentation:
             # If we can't read the file, assume it's not a test file
             return False
     
-    def parse_file_for_requirements(self, file_path, req_re, test_step_re, test_verification_re, requirement_group=1):
+    def parse_file_for_requirements(self, file_path, req_regexes, test_step_re, test_verification_re, requirement_group=1):
         requirements = []
         with open(file_path, 'r') as file:
             lines = file.readlines()
             curr_req = None
             for i, line in enumerate(lines):
-                req_match = req_re.match(line)
+                # Check all requirement regex patterns
+                req_match = None
+                for req_re in req_regexes:
+                    req_match = req_re.match(line)
+                    if req_match:
+                        break
+                
                 if req_match:
                     if curr_req:
                         requirements.append(curr_req)
@@ -220,7 +226,9 @@ class CreateFDADocumentation:
         language_configs = {
             'golang': {
                 'test_file_ext': '.go',
-                'regex_requirement': re.compile(r'^func\s+Test_(.+)\(t\s+\*testing.T\)'),
+                'regex_requirement': [
+                    re.compile(r'^func\s+Test_*(.+)\(t\s+\*testing.T\)'),
+                ],
                 'regex_test_step': re.compile(r'\s+//\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s+//\s*(V\d+:\s*.+)'),
                 'requirement_group': 1,
@@ -232,7 +240,9 @@ class CreateFDADocumentation:
             },
             'swift': {
                 'test_file_ext': '.swift',
-                'regex_requirement': re.compile(r'\s+func\s+test_(.+)\(\).+\{'),
+                'regex_requirement': [
+                    re.compile(r'\s+func\s+test_*(.+)\(\).+\{'),
+                ],
                 'regex_test_step': re.compile(r'\s+//\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s+//\s*(V\d+:\s*.+)'),
                 'requirement_group': 1,
@@ -244,7 +254,10 @@ class CreateFDADocumentation:
             },
             'python': {
                 'test_file_ext': '.py',
-                'regex_requirement': re.compile(r'^\s*def\s+test_(.+)\('),
+                'regex_requirement': [
+                    re.compile(r'^\s*def\s+test_*(.+)\('),
+                    re.compile(r'^\s*def\s+test(.+)\(')
+                ],
                 'regex_test_step': re.compile(r'\s*#\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s*#\s*(V\d+:\s*.+)'),
                 'requirement_group': 1,
@@ -258,7 +271,10 @@ class CreateFDADocumentation:
             },
             'javascript': {
                 'test_file_ext': '.js',
-                'regex_requirement': re.compile(r'^\s*(it|test)\(\s*[\'"](.+?)[\'"]'),
+                'regex_requirement': [
+                    re.compile(r'^\s*(it|test)\(\s*[\'"](.+?)[\'"]'),
+                    re.compile(r'^\s*(it|test)\s*\(\s*[\'"](.+?)[\'"]')
+                ],
                 'regex_test_step': re.compile(r'\s*//\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s*//\s*(V\d+:\s*.+)'),
                 'requirement_group': 2,
@@ -272,7 +288,10 @@ class CreateFDADocumentation:
             },
             'typescript': {
                 'test_file_ext': '.ts',
-                'regex_requirement': re.compile(r'^\s*(it|test)\(\s*[\'"](.+?)[\'"]'),
+                'regex_requirement': [
+                    re.compile(r'^\s*(it|test)\(\s*[\'"](.+?)[\'"]'),
+                    re.compile(r'^\s*(it|test)\s*\(\s*[\'"](.+?)[\'"]')
+                ],
                 'regex_test_step': re.compile(r'\s*//\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s*//\s*(V\d+:\s*.+)'),
                 'requirement_group': 2,
@@ -286,7 +305,11 @@ class CreateFDADocumentation:
             },
             'java': {
                 'test_file_ext': '.java',
-                'regex_requirement': re.compile(r'^\s*void\s+test_(.+?)\('),
+                'regex_requirement': [
+                    re.compile(r'^\s*@DisplayName\(\s*[\'"](.+?)[\'"]\s*\)\s*'),
+                    re.compile(r'^\s*@Test\s*\n\s*public\s+void\s+(.+?)\('),
+                    re.compile(r'^\s*void\s+test_*(.+?)\(')
+                ],
                 'regex_test_step': re.compile(r'\s*//\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s*//\s*(V\d+:\s*.+)'),
                 'requirement_group': 1,
@@ -300,7 +323,12 @@ class CreateFDADocumentation:
             },
             'csharp': {
                 'test_file_ext': '.cs',
-                'regex_requirement': re.compile(r'^\s*\[Test\]\s*\n\s*public\s+void\s+Test(.+?)\('),
+                'regex_requirement': [
+                    re.compile(r'^\s*\[Test\]\s*\n\s*public\s+void\s+Test(.+?)\('),
+                    re.compile(r'^\s*\[Test\]\s*public\s+void\s+Test(.+?)\('),
+                    re.compile(r'^\s*\[TestMethod\]\s*\n\s*public\s+void\s+(.+?)\('),
+                    re.compile(r'^\s*\[Fact\]\s*\n\s*public\s+void\s+(.+?)\(')
+                ],
                 'regex_test_step': re.compile(r'\s*//\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s*//\s*(V\d+:\s*.+)'),
                 'requirement_group': 1,
@@ -315,7 +343,11 @@ class CreateFDADocumentation:
             },
             'dart': {
                 'test_file_ext': '.dart',
-                'regex_requirement': re.compile(r'^\s*test\(\s*[\'"](.+?)[\'"]'),
+                'regex_requirement': [
+                    re.compile(r'^\s*test\(\s*[\'"](.+?)[\'"]'),
+                    re.compile(r'^\s*testWidgets\(\s*[\'"](.+?)[\'"]'),
+                    re.compile(r'^\s*blocTest<.+?>\s*\(\s*[\'"](.+?)[\'"]')
+                ],
                 'regex_test_step': re.compile(r'\s*//\s*(S\d+:\s*.+)'),
                 'regex_test_ver': re.compile(r'\s*//\s*(V\d+:\s*.+)'),
                 'requirement_group': 1,
@@ -323,9 +355,11 @@ class CreateFDADocumentation:
                     re.compile(r'^\s*import\s+[\'"]package:test/test\.dart[\'"]'),
                     re.compile(r'^\s*import\s+[\'"]package:flutter_test/flutter_test\.dart[\'"]'),
                     re.compile(r'^\s*import\s+[\'"]package:mockito/mockito\.dart[\'"]'),
+                    re.compile(r'^\s*import\s+[\'"]package:bloc_test/bloc_test\.dart[\'"]'),
                     re.compile(r'^\s*test\s*\('),
                     re.compile(r'^\s*group\s*\('),
-                    re.compile(r'^\s*testWidgets\s*\(')
+                    re.compile(r'^\s*testWidgets\s*\('),
+                    re.compile(r'^\s*blocTest\s*<')
                 ]
             }
         }
@@ -421,7 +455,6 @@ class CreateFDADocumentation:
 
     def create_documentation(self, test_files, lang_config, sections, tag, template_req_doc_path, template_ver_doc_path, output_req_doc_path, output_ver_doc_path):
         # Parse requirements from all test files
-        breakpoint()
         requirements = []
         for test_file in test_files:
             print(f"Processing test file: {os.path.basename(test_file)}", end='\r')
